@@ -149,7 +149,7 @@ namespace MidiStyleExplorer
         /// </summary>
         /// <param name="channel">Specific channel or empty/null for all.</param>
         /// <returns>The collection or null if invalid.</returns>
-        public IEnumerable<MidiEvent> GetEvents(string pattern, int channel)
+        public IEnumerable<MidiEvent> GetEvents(string? pattern, int channel)
         {
             IEnumerable<MidiEvent> ret = string.IsNullOrEmpty(pattern) ?
                 _midiEvents.Where(v => v.channel == channel).Select(v => v.evt) :

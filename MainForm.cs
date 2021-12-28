@@ -43,7 +43,7 @@ namespace MidiStyleExplorer
         bool _running = false;
 
         /// <summary>Midi events from the input file.</summary>
-        MidiFile _mfile = new();
+        MidiFile? _mfile;// = new();
 
         /// <summary>All the channels. Index is 0-based channel number.</summary>
         readonly PlayChannel[] _playChannels = new PlayChannel[MidiDefs.NUM_CHANNELS];
@@ -320,74 +320,62 @@ namespace MidiStyleExplorer
         /// </summary>
         /// <param name="fn">The file to open.</param>
         /// <returns>Status.</returns>
-        public bool OpenFile(string fn)
+        public void OpenFile(string fn)
         {
-            bool ok = true;
-
             Stop();
 
             LogMessage("INFO", $"Opening file: {fn}");
 
-            using (new WaitCursor())
+            try
             {
-                try
+                // Clean up first.
+                cgChannels.Clear();
+                Rewind();
+
+                // Process the file.
+                _mfile = new MidiFile { IgnoreNoisy = true };
+                _mfile.ProcessFile(fn);
+
+                // Do things with things.
+                _mfile.Channels.ForEach(ch => _playChannels[ch.Key - 1].Patch = ch.Value);
+
+                lbPatterns.Items.Clear();
+                foreach (var p in _mfile.AllPatterns)
                 {
-                    // Clean up first.
-                    cgChannels.Clear();
-                    Rewind();
-
-                    // Process the file.
-                    _mfile = new MidiFile { IgnoreNoisy = true };
-                    _mfile.ProcessFile(fn);
-
-                    // Do things with things.
-                    _mfile.Channels.ForEach(ch => _playChannels[ch.Key - 1].Patch = ch.Value);
-
-                    lbPatterns.Items.Clear();
-                    foreach (var p in _mfile.AllPatterns)
+                    switch (p)
                     {
-                        switch (p)
-                        {
-                            case "SFF1": // patches are in here
-                            case "SFF2":
-                            case "SInt":
-                                break;
+                        case "SFF1": // patches are in here
+                        case "SFF2":
+                        case "SInt":
+                            break;
 
-                            default:
-                                lbPatterns.Items.Add(p);
-                                break;
-                        }
+                        default:
+                            lbPatterns.Items.Add(p);
+                            break;
                     }
-
-                    if (lbPatterns.Items.Count > 0)
-                    {
-                        lbPatterns.SelectedIndex = 0;
-                    }
-                    else
-                    {
-                       //TODO GetPatternEvents(null);
-                    }
-
-                    InitChannelsGrid();
                 }
-                catch (Exception ex)
+
+                if (lbPatterns.Items.Count > 0)
                 {
-                    LogMessage("ERROR", $"Couldn't open the file: {fn} because: {ex.Message}");
-                    ok = false;
+                    lbPatterns.SelectedIndex = 0;
                 }
-            }
+                else
+                {
+                    GetPatternEvents(null);
+                }
 
-            if (ok)
-            {
+                InitChannelsGrid();
+
+                _fn = fn;
                 Text = $"MidiStyleExplorer {MiscUtils.GetVersionString()} - {fn}";
                 _settings.RecentFiles.UpdateMru(fn);
             }
-            else
+            catch (Exception ex)
             {
+                LogMessage("ERROR", $"Couldn't open the file: {fn} because: {ex.Message}");
+                _fn = "";
                 Text = $"MidiStyleExplorer {MiscUtils.GetVersionString()} - No file loaded";
             }
-
-            return ok;
         }
         #endregion
 
@@ -396,22 +384,9 @@ namespace MidiStyleExplorer
         /// Internal handler.
         /// </summary>
         /// <returns></returns>
-        bool Stop()
-        {
-            _mmTimer.Stop();
-            _running = false;
-            // Send midi stop all notes just in case.
-            KillAll();
-            SetPlayCheck(false);
-            return true;
-        }
-
-        /// <summary>
-        /// Internal handler.
-        /// </summary>
-        /// <returns></returns>
         bool Play()
         {
+
             // Start or restart?
             if (!_running)
             {
@@ -436,6 +411,20 @@ namespace MidiStyleExplorer
             }
 
             SetPlayCheck(true);
+            return true;
+        }
+
+        /// <summary>
+        /// Internal handler.
+        /// </summary>
+        /// <returns></returns>
+        bool Stop()
+        {
+            _mmTimer.Stop();
+            _running = false;
+            // Send midi stop all notes just in case.
+            KillAll();
+            SetPlayCheck(false);
             return true;
         }
 
@@ -526,7 +515,6 @@ namespace MidiStyleExplorer
             Stop();
             barBar.Current = BarSpan.Zero;
         }
-
         #endregion
 
         #region Midi I/O
@@ -776,7 +764,7 @@ namespace MidiStyleExplorer
         /// Get requested events.
         /// </summary>
         /// <param name="pattern">Specific pattern.</param>
-        void GetPatternEvents(string pattern)
+        void GetPatternEvents(string? pattern)
         {
             // Init internal structure.
             _playChannels.ForEach(pc => pc.Reset());
