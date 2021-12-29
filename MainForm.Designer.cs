@@ -21,8 +21,9 @@
             this.fileDropDownButton = new System.Windows.Forms.ToolStripDropDownButton();
             this.btnSettings = new System.Windows.Forms.ToolStripButton();
             this.btnAbout = new System.Windows.Forms.ToolStripButton();
+            this.btnAutoplay = new System.Windows.Forms.ToolStripButton();
+            this.btnLoop = new System.Windows.Forms.ToolStripButton();
             this.txtViewer = new NBagOfUis.TextViewer();
-            this.chkLoop = new System.Windows.Forms.CheckBox();
             this.sldVolume = new NBagOfUis.Slider();
             this.btnRewind = new System.Windows.Forms.Button();
             this.chkPlay = new System.Windows.Forms.CheckBox();
@@ -46,7 +47,9 @@
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileDropDownButton,
             this.btnSettings,
-            this.btnAbout});
+            this.btnAbout,
+            this.btnAutoplay,
+            this.btnLoop});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1358, 27);
@@ -86,6 +89,28 @@
             this.btnAbout.ToolTipText = "Get some info";
             this.btnAbout.Click += new System.EventHandler(this.About_Click);
             // 
+            // btnAutoplay
+            // 
+            this.btnAutoplay.CheckOnClick = true;
+            this.btnAutoplay.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.btnAutoplay.Image = global::MidiStyleExplorer.Properties.Resources.glyphicons_221_play_button;
+            this.btnAutoplay.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnAutoplay.Name = "btnAutoplay";
+            this.btnAutoplay.Size = new System.Drawing.Size(29, 24);
+            this.btnAutoplay.Text = "toolStripButton1";
+            this.btnAutoplay.Click += new System.EventHandler(this.btnAutoplay_Click);
+            // 
+            // btnLoop
+            // 
+            this.btnLoop.CheckOnClick = true;
+            this.btnLoop.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.btnLoop.Image = global::MidiStyleExplorer.Properties.Resources.glyphicons_82_refresh;
+            this.btnLoop.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnLoop.Name = "btnLoop";
+            this.btnLoop.Size = new System.Drawing.Size(29, 24);
+            this.btnLoop.Text = "toolStripButton1";
+            this.btnLoop.Click += new System.EventHandler(this.btnLoop_Click);
+            // 
             // txtViewer
             // 
             this.txtViewer.Font = new System.Drawing.Font("Consolas", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
@@ -96,19 +121,6 @@
             this.txtViewer.Size = new System.Drawing.Size(647, 283);
             this.txtViewer.TabIndex = 58;
             this.txtViewer.Text = "";
-            // 
-            // chkLoop
-            // 
-            this.chkLoop.Appearance = System.Windows.Forms.Appearance.Button;
-            this.chkLoop.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(128)))));
-            this.chkLoop.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.chkLoop.Image = global::MidiStyleExplorer.Properties.Resources.glyphicons_366_restart;
-            this.chkLoop.Location = new System.Drawing.Point(122, 43);
-            this.chkLoop.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.chkLoop.Name = "chkLoop";
-            this.chkLoop.Size = new System.Drawing.Size(43, 49);
-            this.chkLoop.TabIndex = 55;
-            this.chkLoop.UseVisualStyleBackColor = false;
             // 
             // sldVolume
             // 
@@ -159,7 +171,7 @@
             this.cmbPatchList.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbPatchList.DropDownWidth = 150;
             this.cmbPatchList.FormattingEnabled = true;
-            this.cmbPatchList.Location = new System.Drawing.Point(466, 228);
+            this.cmbPatchList.Location = new System.Drawing.Point(466, 258);
             this.cmbPatchList.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.cmbPatchList.Name = "cmbPatchList";
             this.cmbPatchList.Size = new System.Drawing.Size(98, 28);
@@ -170,7 +182,7 @@
             // 
             this.txtPatchChannel.BackColor = System.Drawing.SystemColors.Control;
             this.txtPatchChannel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtPatchChannel.Location = new System.Drawing.Point(534, 193);
+            this.txtPatchChannel.Location = new System.Drawing.Point(534, 223);
             this.txtPatchChannel.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtPatchChannel.Name = "txtPatchChannel";
             this.txtPatchChannel.Size = new System.Drawing.Size(30, 27);
@@ -183,11 +195,11 @@
             this.barBar.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.barBar.FontLarge = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.barBar.FontSmall = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.barBar.Location = new System.Drawing.Point(466, 13);
+            this.barBar.Location = new System.Drawing.Point(466, 43);
             this.barBar.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.barBar.MarkerColor = System.Drawing.Color.Black;
             this.barBar.Name = "barBar";
-            this.barBar.ProgressColor = System.Drawing.Color.White;
+            this.barBar.ProgressColor = System.Drawing.Color.NavajoWhite;
             this.barBar.Size = new System.Drawing.Size(699, 62);
             this.barBar.Snap = NBagOfUis.BarBar.SnapType.Bar;
             this.barBar.SubdivsPerBeat = 8;
@@ -197,7 +209,7 @@
             // cgChannels
             // 
             this.cgChannels.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.cgChannels.Location = new System.Drawing.Point(721, 83);
+            this.cgChannels.Location = new System.Drawing.Point(721, 113);
             this.cgChannels.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.cgChannels.Name = "cgChannels";
             this.cgChannels.Size = new System.Drawing.Size(444, 222);
@@ -211,7 +223,7 @@
             this.sldTempo.DecPlaces = 0;
             this.sldTempo.DrawColor = System.Drawing.Color.White;
             this.sldTempo.Label = "BPM";
-            this.sldTempo.Location = new System.Drawing.Point(466, 83);
+            this.sldTempo.Location = new System.Drawing.Point(466, 113);
             this.sldTempo.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.sldTempo.Maximum = 200D;
             this.sldTempo.Minimum = 50D;
@@ -227,7 +239,7 @@
             // btnKill
             // 
             this.btnKill.Image = global::MidiStyleExplorer.Properties.Resources.glyphicons_242_flash;
-            this.btnKill.Location = new System.Drawing.Point(508, 269);
+            this.btnKill.Location = new System.Drawing.Point(508, 299);
             this.btnKill.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnKill.Name = "btnKill";
             this.btnKill.Size = new System.Drawing.Size(32, 40);
@@ -242,18 +254,19 @@
             this.lbPatterns.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lbPatterns.FormattingEnabled = true;
             this.lbPatterns.ItemHeight = 20;
-            this.lbPatterns.Location = new System.Drawing.Point(584, 83);
+            this.lbPatterns.Location = new System.Drawing.Point(584, 113);
             this.lbPatterns.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.lbPatterns.Name = "lbPatterns";
             this.lbPatterns.Size = new System.Drawing.Size(131, 222);
             this.lbPatterns.TabIndex = 88;
             this.toolTip.SetToolTip(this.lbPatterns, "All patterns in style file");
+            this.lbPatterns.SelectedIndexChanged += new System.EventHandler(this.Patterns_SelectedIndexChanged);
             // 
             // chkDrumsOn1
             // 
             this.chkDrumsOn1.Appearance = System.Windows.Forms.Appearance.Button;
             this.chkDrumsOn1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.chkDrumsOn1.Location = new System.Drawing.Point(466, 149);
+            this.chkDrumsOn1.Location = new System.Drawing.Point(466, 179);
             this.chkDrumsOn1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.chkDrumsOn1.Name = "chkDrumsOn1";
             this.chkDrumsOn1.Size = new System.Drawing.Size(98, 34);
@@ -268,7 +281,7 @@
             this.chkLogMidi.Appearance = System.Windows.Forms.Appearance.Button;
             this.chkLogMidi.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.chkLogMidi.Image = global::MidiStyleExplorer.Properties.Resources.glyphicons_170_record;
-            this.chkLogMidi.Location = new System.Drawing.Point(466, 269);
+            this.chkLogMidi.Location = new System.Drawing.Point(466, 299);
             this.chkLogMidi.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.chkLogMidi.Name = "chkLogMidi";
             this.chkLogMidi.Size = new System.Drawing.Size(32, 40);
@@ -278,7 +291,7 @@
             // 
             // btnPatch
             // 
-            this.btnPatch.Location = new System.Drawing.Point(465, 193);
+            this.btnPatch.Location = new System.Drawing.Point(465, 223);
             this.btnPatch.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnPatch.Name = "btnPatch";
             this.btnPatch.Size = new System.Drawing.Size(65, 29);
@@ -304,7 +317,6 @@
             this.Controls.Add(this.chkLogMidi);
             this.Controls.Add(this.btnPatch);
             this.Controls.Add(this.txtViewer);
-            this.Controls.Add(this.chkLoop);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.chkPlay);
             this.Controls.Add(this.sldVolume);
@@ -329,7 +341,6 @@
         private NBagOfUis.Slider sldVolume;
         private System.Windows.Forms.Button btnRewind;
         private System.Windows.Forms.CheckBox chkPlay;
-        private System.Windows.Forms.CheckBox chkLoop;
         private System.Windows.Forms.ToolStripButton btnSettings;
         private System.Windows.Forms.ToolStripButton btnAbout;
         private NBagOfUis.TextViewer txtViewer;
@@ -344,6 +355,8 @@
         private System.Windows.Forms.CheckBox chkDrumsOn1;
         private System.Windows.Forms.CheckBox chkLogMidi;
         private System.Windows.Forms.Button btnPatch;
+        private System.Windows.Forms.ToolStripButton btnAutoplay;
+        private System.Windows.Forms.ToolStripButton btnLoop;
     }
 }
 

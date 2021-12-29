@@ -41,7 +41,7 @@ namespace MidiStyleExplorer
         public string KeySig { get; private set; } = "";
 
         /// <summary>Channel/patch info: key is 1-based channel number, value is 0-based patch.</summary>
-        public Dictionary<int, int> Channels { get; private set; } = new();
+        public Dictionary<int, int> Patches { get; private set; } = new();
 
         /// <summary>All patterns in the file.</summary>
         public List<string> AllPatterns { get; private set; } = new();
@@ -80,7 +80,7 @@ namespace MidiStyleExplorer
             _midiEvents.Clear();
             Filename = fn;
             AllPatterns.Clear();
-            Channels.Clear();
+            Patches.Clear();
             DeltaTicksPerQuarterNote = 0;
             Tempo = 100;
             TimeSig = "";
@@ -215,9 +215,9 @@ namespace MidiStyleExplorer
                 absoluteTime += me.DeltaTime;
                 me.AbsoluteTime = absoluteTime;
 
-                if (!Channels.ContainsKey(me.Channel))
+                if (!Patches.ContainsKey(me.Channel))
                 {
-                    Channels.Add(me.Channel, -1);
+                    Patches.Add(me.Channel, -1);
                 }
 
 
@@ -252,7 +252,7 @@ namespace MidiStyleExplorer
 
                     case PatchChangeEvent evt:
                         //chdesc = PatchChangeEvent.GetPatchName(evt.Patch);
-                        Channels[evt.Channel] = evt.Patch;
+                        Patches[evt.Channel] = evt.Patch;
                         AddMidiEvent(evt);
                         Capture(evt.AbsoluteTime, "PatchChangeEvent", evt.Channel, evt.ToString());
                         break;
@@ -661,7 +661,7 @@ namespace MidiStyleExplorer
             //lhdr.Add(new KeySignatureEvent(0, 0, 0));
 
             // Patches.
-            Channels.Where(c => c.Value != -1).ForEach(c => mevents.Add(new PatchChangeEvent(0, c.Key, c.Value)));
+            Patches.Where(c => c.Value != -1).ForEach(c => mevents.Add(new PatchChangeEvent(0, c.Key, c.Value)));
 
             // Collect the midi events for this pattern ordered by timestamp.
             IEnumerable<MidiEvent> evts = string.IsNullOrEmpty(pattern) ?

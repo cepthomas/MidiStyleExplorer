@@ -113,6 +113,16 @@ namespace MidiStyleExplorer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap glyphicons_221_play_button {
+            get {
+                object obj = ResourceManager.GetObject("glyphicons_221_play_button", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap glyphicons_242_flash {
             get {
                 object obj = ResourceManager.GetObject("glyphicons_242_flash", resourceCulture);
@@ -136,6 +146,26 @@ namespace MidiStyleExplorer.Properties {
         internal static System.Drawing.Bitmap glyphicons_37_file {
             get {
                 object obj = ResourceManager.GetObject("glyphicons_37_file", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap glyphicons_82_refresh {
+            get {
+                object obj = ResourceManager.GetObject("glyphicons_82_refresh", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap glyphicons_86_repeat {
+            get {
+                object obj = ResourceManager.GetObject("glyphicons_86_repeat", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -43,7 +43,7 @@ namespace MidiStyleExplorer
         bool _running = false;
 
         /// <summary>Midi events from the input file.</summary>
-        MidiFile? _mfile;// = new();
+        MidiFile _mfile = new();
 
         /// <summary>All the channels. Index is 0-based channel number.</summary>
         readonly PlayChannel[] _playChannels = new PlayChannel[MidiDefs.NUM_CHANNELS];
@@ -58,7 +58,14 @@ namespace MidiStyleExplorer
         /// </summary>
         public MainForm()
         {
+            // Need to load settings before creating controls in MainForm_Load().
+            string appDir = MiscUtils.GetAppDataDir("MidiStyleExplorer", "Ephemera");
+            DirectoryInfo di = new(appDir);
+            di.Create();
+            _settings = UserSettings.Load(appDir);
+
             InitializeComponent();
+            toolStrip1.Renderer = new TsRenderer(); //TODO { SelectedColor = _settings.ControlColor };
         }
 
         /// <summary>
@@ -67,12 +74,6 @@ namespace MidiStyleExplorer
         void MainForm_Load(object? sender, EventArgs e)
         {
             Icon = Properties.Resources.Morso;
-
-            // Get the settings.
-            string appDir = MiscUtils.GetAppDataDir("MidiStyleExplorer", "Ephemera");
-            DirectoryInfo di = new(appDir);
-            di.Create();
-            _settings = UserSettings.Load(appDir);
 
             // Init main form from settings
             Location = new Point(_settings.MainFormInfo.X, _settings.MainFormInfo.Y);
@@ -102,9 +103,10 @@ namespace MidiStyleExplorer
             cmbPatchList.SelectedIndex = 0;
 
             // Other UI configs.
-
             chkDrumsOn1.FlatAppearance.CheckedBackColor = _settings.ControlColor;
             chkLogMidi.FlatAppearance.CheckedBackColor = _settings.ControlColor;
+            chkPlay.FlatAppearance.CheckedBackColor = _settings.ControlColor;
+            //btnAutoplay
             sldVolume.Value = _settings.Volume;
             sldVolume.DrawColor = _settings.ControlColor;
             sldTempo.DrawColor = _settings.ControlColor;
@@ -198,7 +200,7 @@ namespace MidiStyleExplorer
                 ShowInTaskbar = false
             };
 
-            PropertyGridEx pg = new()
+            PropertyGrid pg = new()
             {
                 Dock = DockStyle.Fill,
                 PropertySort = PropertySort.Categorized,
@@ -240,8 +242,8 @@ namespace MidiStyleExplorer
         /// <summary>
         /// Something you should know.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="ea"></param>
+        /// <param name="cat"></param>
+        /// <param name="msg"></param>
         void LogMessage(string cat, string msg)
         {
             int catSize = 5;
@@ -337,7 +339,7 @@ namespace MidiStyleExplorer
                 _mfile.ProcessFile(fn);
 
                 // Do things with things.
-                _mfile.Channels.ForEach(ch => _playChannels[ch.Key - 1].Patch = ch.Value);
+                _mfile.Patches.ForEach(ch => _playChannels[ch.Key - 1].Patch = ch.Value);
 
                 lbPatterns.Items.Clear();
                 foreach (var p in _mfile.AllPatterns)
@@ -386,7 +388,6 @@ namespace MidiStyleExplorer
         /// <returns></returns>
         bool Play()
         {
-
             // Start or restart?
             if (!_running)
             {
@@ -459,7 +460,7 @@ namespace MidiStyleExplorer
             // Usually comes from a different thread.
             this.InvokeIfRequired(_ =>
             {
-                if (chkLoop.Checked)
+                if (btnLoop.Checked)
                 {
                     Play();
                 }
@@ -678,10 +679,23 @@ namespace MidiStyleExplorer
         #endregion
 
 
-        //////////////////////// TODO all this leftover stuf ////////////////////////////////////////////////////////////////////////
-        //////////////////////// TODO all this leftover stuf ////////////////////////////////////////////////////////////////////////
-        //////////////////////// TODO all this leftover stuf ////////////////////////////////////////////////////////////////////////
-        //////////////////////// TODO all this leftover stuf ////////////////////////////////////////////////////////////////////////
+
+        private void btnAutoplay_Click(object sender, EventArgs e)//TODO persist
+        {
+
+        }
+
+
+        private void btnLoop_Click(object sender, EventArgs e)//TODO persist
+        {
+
+        }
+
+
+        //////////////////////// TODO all this leftover stuff ////////////////////////////////////////////////////////////////////////
+        //////////////////////// TODO all this leftover stuff ////////////////////////////////////////////////////////////////////////
+        //////////////////////// TODO all this leftover stuff ////////////////////////////////////////////////////////////////////////
+        //////////////////////// TODO all this leftover stuff ////////////////////////////////////////////////////////////////////////
 
 
         #region Utilities
@@ -692,10 +706,15 @@ namespace MidiStyleExplorer
         {
             bool clip = true;
 
-            var ds = Dump();
+            //_mfile.DrumChannel = _drumChannel;
+            //return _mfile.GetReadableGrouped();
+            var ds = _mfile.GetReadableContents();
+
+
+
             if (ds.Count > 0)
             {
-               if (clip)//_settings.DumpToClip)
+               if (_settings.DumpToClip)
                {
                    Clipboard.SetText(string.Join(Environment.NewLine, ds));
                    LogMessage("INFO", "File dumped to clipboard");
@@ -718,18 +737,8 @@ namespace MidiStyleExplorer
         /// <param name="e"></param>
         void Export_Click(object? sender, EventArgs e)
         {
-            Export();
-        }
+            /////Export();
 
-        public List<string> Dump()
-        {
-            _mfile.DrumChannel = _drumChannel;
-            //return _mfile.GetReadableGrouped();
-            return _mfile.GetReadableContents();
-        }
-
-        public void Export()
-        {
             string dir = Path.GetDirectoryName(_mfile.Filename)!;
             string newfn = Path.GetFileNameWithoutExtension(_mfile.Filename);
             string pattern;
@@ -778,7 +787,7 @@ namespace MidiStyleExplorer
             };
 
             // Bin events by channel. Scale to internal ppq.
-            foreach (var ch in _mfile.Channels)
+            foreach (var ch in _mfile.Patches)
             {
                 _playChannels[ch.Key - 1].Patch = ch.Value;
                 var pevts = _mfile.GetEvents(pattern, ch.Key);
@@ -925,7 +934,7 @@ namespace MidiStyleExplorer
             InitChannelsGrid();
 
             // Might need to update the patches.
-            foreach (var ch in _mfile.Channels)
+            foreach (var ch in _mfile.Patches)
             {
                 if (ch.Value != -1)
                 {
@@ -935,7 +944,11 @@ namespace MidiStyleExplorer
             }
 
             Rewind();
-            Play();
+
+            if(_settings.Autoplay)
+            {
+                Play();
+            }
         }
     }
 }

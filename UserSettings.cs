@@ -9,6 +9,7 @@ using System.ComponentModel.Design;
 using System.Windows.Forms.Design;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using NBagOfTricks;
 using NAudio.Wave;
 using NAudio.Midi;
 using NBagOfUis;
@@ -31,6 +32,21 @@ namespace MidiStyleExplorer
         [Browsable(true)]
         public int DefaultTempo { get; set; } = 100;
 
+        [DisplayName("Autoplay Files")]
+        [Description("Selection plays file otherwise requires double click.")]
+        [Browsable(true)]
+        public bool Autoplay { get; set; } = true;
+
+        [DisplayName("Loop Files")]
+        [Description("Loop play forever.")]
+        [Browsable(true)]
+        public bool Loop { get; set; } = false;
+
+        [DisplayName("Dump To Clipboard")]
+        [Description("Otherwise to file.")]
+        [Browsable(true)]
+        public bool DumpToClip { get; set; } = false;
+
         [DisplayName("Snap To Grid")]
         [Description("Snap to bar | beat | subdiv.")]
         [Browsable(true)]
@@ -39,6 +55,7 @@ namespace MidiStyleExplorer
         [DisplayName("Control Color")]
         [Description("Pick what you like.")]
         [Browsable(true)]
+        [JsonConverter(typeof(JsonColorConverter))]
         public Color ControlColor { get; set; } = Color.MediumOrchid;
         #endregion
 
