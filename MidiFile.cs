@@ -45,6 +45,9 @@ namespace MidiStyleExplorer
 
         /// <summary>All patterns in the file.</summary>
         public List<string> AllPatterns { get; private set; } = new();
+
+        /// <summary>File contents in readable form as they appear in order. Useful for debug.</summary>
+        public List<string> ReadableContents { get; private set; } = new();
         #endregion
 
         #region Properties set by client
@@ -56,17 +59,14 @@ namespace MidiStyleExplorer
         #endregion
 
         #region Fields
-        /// <summary>All the midi events by pattern/channel groups. This is the verbatim content of the file with no processing.</summary>
+        /// <summary>All the midi events grouped by pattern/channel. This is the verbatim content of the file with no processing.</summary>
         readonly List<(string pattern, int channel, MidiEvent evt)> _midiEvents = new();
 
         /// <summary>Current pattern.</summary>
         string _currentPattern = "";
 
-        /// <summary>File contents in readable form as they appear in order. Useful for debug.</summary>
-        readonly List<string> _allContents = new();
-
         /// <summary>Save this for maybe logging.</summary>
-        long _lastPos = 0;
+        long _lastStreamPos = 0;
         #endregion
 
         #region Public methods
@@ -86,8 +86,8 @@ namespace MidiStyleExplorer
             TimeSig = "";
             KeySig = "";
 
-            _allContents.Clear();
-            _allContents.Add($"Timestamp,Type,Pattern,Channel,FilePos,Content");
+            ReadableContents.Clear();
+            ReadableContents.Add($"Timestamp,Type,Pattern,Channel,FilePos,Content");
 
             using var br = new BinaryReader(File.OpenRead(fn));
             bool done = false;
@@ -172,21 +172,21 @@ namespace MidiStyleExplorer
                 throw new FormatException("Unexpected header chunk length");
             }
 
+            // Midi file type.
             MidiFileType = (int)Read(br, 2);
-
-            // Style midi section is always type 0.
             //if (MidiFileType != 0)
             //{
             //    throw new FormatException($"This is type {MidiFileType} - must be 0");
             //}
 
-            // Midi file type.
+            // Number of tracks.
             Tracks = (int)Read(br, 2);
             // if (Tracks != 1)
             // {
             //     throw new FormatException($"This has {Tracks} tracks - must be 1");
             // }
 
+            // Resolution.
             DeltaTicksPerQuarterNote = (int)Read(br, 2);
         }
 
@@ -209,7 +209,7 @@ namespace MidiStyleExplorer
             MidiEvent? me = null; // current
             while (br.BaseStream.Position < startPos + chunkSize)
             {
-                _lastPos = br.BaseStream.Position;
+                _lastStreamPos = br.BaseStream.Position;
 
                 me = MidiEvent.ReadNextEvent(br, me);
                 absoluteTime += me.DeltaTime;
@@ -219,8 +219,6 @@ namespace MidiStyleExplorer
                 {
                     Patches.Add(me.Channel, -1);
                 }
-
-
 
                 switch (me)
                 {
@@ -313,142 +311,6 @@ namespace MidiStyleExplorer
                         Capture(-1, "Other", -1, $"{me.GetType()} {me}");
                         break;
                 }
-
-
-                //switch (me.CommandCode)
-                //{
-                //    ///// Standard midi events /////
-                //    case MidiCommandCode.NoteOn:
-                //        {
-                //            NoteOnEvent evt = me as NoteOnEvent;
-                //            AddMidiEvent(evt);
-                //            Capture(evt.AbsoluteTime, "NoteOn", evt.Channel, evt.ToString());
-                //        }
-                //        break;
-
-                //    case MidiCommandCode.NoteOff:
-                //        {
-                //            NoteEvent evt = me as NoteEvent;
-                //            AddMidiEvent(evt);
-                //            Capture(evt.AbsoluteTime, "NoteOff", evt.Channel, evt.ToString());
-                //        }
-                //        break;
-
-                //    case MidiCommandCode.ControlChange:
-                //        {
-                //            if (!IgnoreNoisy)
-                //            {
-                //                ControlChangeEvent evt = me as ControlChangeEvent;
-                //                AddMidiEvent(evt);
-                //                Capture(evt.AbsoluteTime, "ControlChange", evt.Channel, evt.ToString());
-                //            }
-                //        }
-                //        break;
-
-                //    case MidiCommandCode.PitchWheelChange:
-                //        {
-                //            if (!IgnoreNoisy)
-                //            {
-                //                PitchWheelChangeEvent evt = me as PitchWheelChangeEvent;
-                //                //AddMidiEvent(evt);
-                //            }
-                //        }
-                //        break;
-
-                //    case MidiCommandCode.PatchChange:
-                //        {
-                //            PatchChangeEvent evt = me as PatchChangeEvent;
-                //            //chdesc = PatchChangeEvent.GetPatchName(evt.Patch);
-                //            Channels[evt.Channel] = evt.Patch;
-                //            AddMidiEvent(evt);
-                //            Capture(evt.AbsoluteTime, "PatchChangeEvent", evt.Channel, evt.ToString());
-                //        }
-                //        break;
-
-                //    case MidiCommandCode.Sysex:
-                //        {
-                //            if (!IgnoreNoisy)
-                //            {
-                //                SysexEvent evt = me as SysexEvent;
-                //                string s = evt.ToString().Replace(Environment.NewLine, " ");
-                //                Capture(evt.AbsoluteTime, "Sysex", evt.Channel, s);
-                //            }
-                //        }
-                //        break;
-
-                //    ///// Meta events /////
-                //    case MidiCommandCode.MetaEvent when (me as MetaEvent).MetaEventType == MetaEventType.TrackSequenceNumber:
-                //        {
-                //            TrackSequenceNumberEvent evt = me as TrackSequenceNumberEvent;
-                //            chnum = evt.Channel;
-                //            Capture(evt.AbsoluteTime, "TrackSequenceNumber", evt.Channel, evt.ToString());
-                //        }
-                //        break;
-
-                //    case MidiCommandCode.MetaEvent when (me as MetaEvent).MetaEventType == MetaEventType.SequenceTrackName:
-                //        {
-                //            TextEvent evt = me as TextEvent;
-                //            Capture(evt.AbsoluteTime, "SequenceTrackName", evt.Channel, evt.Text);
-                //        }
-                //        break;
-
-                //    case MidiCommandCode.MetaEvent when (me as MetaEvent).MetaEventType == MetaEventType.Marker:
-                //        {
-                //            // Indicates start of a new midi pattern.
-                //            TextEvent evt = me as TextEvent;
-                //            Capture(evt.AbsoluteTime, "Marker", evt.Channel, evt.Text);
-                //            _currentPattern = evt.Text;
-                //            AllPatterns.Add(_currentPattern);
-                //            absoluteTime = 0;
-                //        }
-                //        break;
-
-                //    case MidiCommandCode.MetaEvent when (me as MetaEvent).MetaEventType == MetaEventType.EndTrack:
-                //        {
-                //            // Indicates end of current midi track.
-                //            MetaEvent evt = me as MetaEvent;
-                //            Capture(evt.AbsoluteTime, "EndTrack", evt.Channel, evt.ToString());
-                //            _currentPattern = "";
-                //        }
-                //        break;
-
-                //    case MidiCommandCode.MetaEvent when (me as MetaEvent).MetaEventType == MetaEventType.SetTempo:
-                //        {
-                //            TempoEvent evt = me as TempoEvent;
-                //            Tempo = evt.Tempo;
-                //            Capture(evt.AbsoluteTime, "SetTempo", evt.Channel, evt.Tempo.ToString());
-                //        }
-                //        break;
-
-                //    case MidiCommandCode.MetaEvent when (me as MetaEvent).MetaEventType == MetaEventType.TimeSignature:
-                //        {
-                //            TimeSignatureEvent evt = me as TimeSignatureEvent;
-                //            TimeSig = evt.TimeSignature;
-                //            Capture(evt.AbsoluteTime, "TimeSignature", evt.Channel, evt.TimeSignature);
-                //        }
-                //        break;
-
-                //    case MidiCommandCode.MetaEvent when (me as MetaEvent).MetaEventType == MetaEventType.KeySignature:
-                //        {
-                //            KeySignatureEvent evt = me as KeySignatureEvent;
-                //            KeySig = evt.ToString();
-                //            Capture(evt.AbsoluteTime, "KeySignature", evt.Channel, evt.ToString());
-                //        }
-                //        break;
-
-                //    case MidiCommandCode.MetaEvent when (me as MetaEvent).MetaEventType == MetaEventType.TextEvent:
-                //        {
-                //            TextEvent evt = me as TextEvent;
-                //            Capture(evt.AbsoluteTime, "TextEvent", evt.Channel, evt.Text);
-                //        }
-                //        break;
-
-                //    default:
-                //        // Other MidiCommandCodes: AutoSensing, ChannelAfterTouch, ContinueSequence, Eox, KeyAfterTouch, StartSequence, StopSequence, TimingClock
-                //        // Other MetaEventType: Copyright, CuePoint, DeviceName, Lyric, MidiChannel, MidiPort, ProgramName, SequencerSpecific, SmpteOffset, TrackInstrumentName
-                //        Capture(-1, "Other", -1, $"{me.GetType()} {me}");
-                //        break;
-                //}
             }
 
             ///// Local function. /////
@@ -538,7 +400,7 @@ namespace MidiStyleExplorer
         /// <returns></returns>
         public List<string> GetReadableContents()
         {
-            return _allContents;
+            return ReadableContents;
         }
 
         /// <summary>
@@ -682,7 +544,7 @@ namespace MidiStyleExplorer
 
         #region Helpers
         /// <summary>
-        /// Save an event.
+        /// Save an event for internal processing.
         /// </summary>
         /// <param name="timestamp"></param>
         /// <param name="etype"></param>
@@ -690,22 +552,22 @@ namespace MidiStyleExplorer
         /// <param name="content"></param>
         void Capture(long timestamp, string etype, int channel, string content)
         {
-            _allContents.Add($"{timestamp},{etype},{_currentPattern},{channel},{_lastPos},{content.Replace(',', '_')}");
+            ReadableContents.Add($"{timestamp},{etype},{_currentPattern},{channel},{_lastStreamPos},{content.Replace(',', '_')}");
         }
 
         /// <summary>
         /// Read a number and adjust endianess.
         /// </summary>
         /// <param name="br"></param>
-        /// <param name="num"></param>
+        /// <param name="size"></param>
         /// <returns></returns>
-        uint Read(BinaryReader br, int num)
+        uint Read(BinaryReader br, int size)
         {
             uint i;
 
-            _lastPos = br.BaseStream.Position;
+            _lastStreamPos = br.BaseStream.Position;
 
-            switch (num)
+            switch (size)
             {
                 case 2:
                     i = br.ReadUInt16();

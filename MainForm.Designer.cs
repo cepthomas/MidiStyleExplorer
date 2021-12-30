@@ -98,7 +98,7 @@
             this.btnAutoplay.Name = "btnAutoplay";
             this.btnAutoplay.Size = new System.Drawing.Size(29, 24);
             this.btnAutoplay.Text = "toolStripButton1";
-            this.btnAutoplay.Click += new System.EventHandler(this.btnAutoplay_Click);
+            this.btnAutoplay.ToolTipText = "Autoplay the selection";
             // 
             // btnLoop
             // 
@@ -109,7 +109,7 @@
             this.btnLoop.Name = "btnLoop";
             this.btnLoop.Size = new System.Drawing.Size(29, 24);
             this.btnLoop.Text = "toolStripButton1";
-            this.btnLoop.Click += new System.EventHandler(this.btnLoop_Click);
+            this.btnLoop.ToolTipText = "Loop forever";
             // 
             // txtViewer
             // 

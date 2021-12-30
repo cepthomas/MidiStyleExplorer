@@ -17,28 +17,30 @@ namespace MidiStyleExplorer
     /// <summary>Channel events and other properties.</summary>
     public class PlayChannel
     {
-        #region Properties
+        // TODO UI stuff
         /// <summary>Actual 1-based midi channel number for UI.</summary>
         public int ChannelNumber { get; set; } = -1;
 
         /// <summary>For UI.</summary>
         public string Name { get; set; } = "";
 
+        /// <summary>For muting/soloing.</summary>
+        public PlayMode Mode { get; set; } = PlayMode.Normal;
+
+        /// <summary>Optional patch.</summary>
+        public int Patch { get; set; } = -1;
+
+
+
+        #region Properties
         /// <summary>Channel used.</summary>
         public bool Valid { get { return Events.Count > 0; } }
 
         /// <summary>Music or control/meta.</summary>
         public bool HasNotes { get; private set; } = false;
 
-        /// <summary>For muting/soloing.</summary>
-        public PlayMode Mode { get; set; } = PlayMode.Normal;
-        public enum PlayMode { Normal = 0, Solo = 1, Mute = 2 }
-
-        /// <summary>Optional patch.</summary>
-        public int Patch { get; set; } = -1;
-
         ///<summary>The main collection of events. The key is the subdiv/time.</summary>
-        public Dictionary<int, List<MidiEvent>> Events { get; set; } = new Dictionary<int, List<MidiEvent>>();
+        public Dictionary<int, List<MidiEvent>> Events { get; set; } = new();
 
         ///<summary>The duration of the whole channel.</summary>
         public int MaxSubdiv { get; private set; } = 0;
@@ -69,9 +71,9 @@ namespace MidiStyleExplorer
         }
 
         /// <summary>For viewing pleasure.</summary>
-        public override string ToString()
-        {
-            return $"PlayChannel: Name:{Name} ChannelNumber:{ChannelNumber} Mode:{Mode} Events:{Events.Count} MaxSubdiv:{MaxSubdiv}";
-        }
+        //public override string ToString()
+        //{
+        //    return $"PlayChannel: Name:{Name} ChannelNumber:{ChannelNumber} Mode:{Mode} Events:{Events.Count} MaxSubdiv:{MaxSubdiv}";
+        //}
     }
 }

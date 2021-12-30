@@ -6,11 +6,22 @@ using System.Threading.Tasks;
 
 namespace MidiStyleExplorer
 {
-    //public class Common
-    //{
-    //    /// <summary>Current global user settings.</summary>
-    //    public static UserSettings Settings { get; set; } = new UserSettings();
-    //}
+   /// <summary>Channel state.</summary>
+    public enum PlayMode { Normal = 0, Solo = 1, Mute = 2 }
+
+    public class Common
+    {
+        #region Constants
+        /// <summary>Only 4/4 time supported.</summary>
+        public const int BEATS_PER_BAR = 4;
+
+        /// <summary>Our internal ppq aka resolution - used for sending realtime midi messages.</summary>
+        public const int PPQ = 32;
+        #endregion
+
+        /// <summary>Current global user settings.</summary>
+        public static UserSettings Settings { get; set; } = new UserSettings();
+    }
 
     /// <summary>Player has something to say or show.</summary>
     public class LogEventArgs : EventArgs

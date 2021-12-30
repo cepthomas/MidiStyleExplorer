@@ -13,23 +13,13 @@ using NBagOfTricks;
 using NBagOfUis;
 using NAudio.Midi;
 
+// FUTURE solo/mute individual drums.
 
 namespace MidiStyleExplorer
 {
     public partial class MainForm : Form
     {
-        #region Constants
-        /// <summary>Only 4/4 time supported.</summary>
-        const int BEATS_PER_BAR = 4;
-
-        /// <summary>Our internal ppq aka resolution - used for sending realtime midi messages.</summary>
-        const int PPQ = 32;
-        #endregion
-
         #region Fields
-        /// <summary>The settings.</summary>
-        UserSettings _settings = new();
-
         /// <summary>Current file.</summary>
         string _fn = "";
 
@@ -62,10 +52,10 @@ namespace MidiStyleExplorer
             string appDir = MiscUtils.GetAppDataDir("MidiStyleExplorer", "Ephemera");
             DirectoryInfo di = new(appDir);
             di.Create();
-            _settings = UserSettings.Load(appDir);
+            Common.Settings = UserSettings.Load(appDir);
 
             InitializeComponent();
-            toolStrip1.Renderer = new TsRenderer(); //TODO { SelectedColor = _settings.ControlColor };
+            toolStrip1.Renderer = new TsRenderer(); //TODO { SelectedColor = Common.Settings.ControlColor };
         }
 
         /// <summary>
@@ -76,8 +66,8 @@ namespace MidiStyleExplorer
             Icon = Properties.Resources.Morso;
 
             // Init main form from settings
-            Location = new Point(_settings.MainFormInfo.X, _settings.MainFormInfo.Y);
-            Size = new Size(_settings.MainFormInfo.Width, _settings.MainFormInfo.Height);
+            Location = new Point(Common.Settings.MainFormInfo.X, Common.Settings.MainFormInfo.Y);
+            Size = new Size(Common.Settings.MainFormInfo.Width, Common.Settings.MainFormInfo.Height);
             WindowState = FormWindowState.Normal;
             KeyPreview = true; // for routing kbd strokes through MainForm_KeyDown
             Text = $"Clip Explorer {MiscUtils.GetVersionString()} - No file loaded";
@@ -85,8 +75,8 @@ namespace MidiStyleExplorer
             // The text output.
             txtViewer.WordWrap = true;
             txtViewer.BackColor = Color.Cornsilk;
-            txtViewer.Colors.Add("ERROR", Color.LightPink);
-            txtViewer.Colors.Add("WARN:", Color.Plum);
+            txtViewer.Colors.Add("ERR", Color.LightPink);
+            txtViewer.Colors.Add("WRN:", Color.Plum);
             txtViewer.Font = new Font("Lucida Console", 9);
 
             // Init internal structure.
@@ -103,26 +93,27 @@ namespace MidiStyleExplorer
             cmbPatchList.SelectedIndex = 0;
 
             // Other UI configs.
-            chkDrumsOn1.FlatAppearance.CheckedBackColor = _settings.ControlColor;
-            chkLogMidi.FlatAppearance.CheckedBackColor = _settings.ControlColor;
-            chkPlay.FlatAppearance.CheckedBackColor = _settings.ControlColor;
-            //btnAutoplay
-            sldVolume.Value = _settings.Volume;
-            sldVolume.DrawColor = _settings.ControlColor;
-            sldTempo.DrawColor = _settings.ControlColor;
-            sldTempo.Value = _settings.DefaultTempo;
+            chkDrumsOn1.FlatAppearance.CheckedBackColor = Common.Settings.ControlColor;
+            chkLogMidi.FlatAppearance.CheckedBackColor = Common.Settings.ControlColor;
+            chkPlay.FlatAppearance.CheckedBackColor = Common.Settings.ControlColor;
+            btnAutoplay.Checked = Common.Settings.Autoplay;
+            btnLoop.Checked = Common.Settings.Loop;
+            sldVolume.Value = Common.Settings.Volume;
+            sldVolume.DrawColor = Common.Settings.ControlColor;
+            sldTempo.DrawColor = Common.Settings.ControlColor;
+            sldTempo.Value = Common.Settings.DefaultTempo;
 
             // Time controller.
-            barBar.BeatsPerBar = BEATS_PER_BAR;
-            barBar.SubdivsPerBeat = PPQ;
-            barBar.Snap = _settings.Snap;
-            barBar.ProgressColor = _settings.ControlColor;
+            barBar.BeatsPerBar = Common.BEATS_PER_BAR;
+            barBar.SubdivsPerBeat = Common.PPQ;
+            barBar.Snap = Common.Settings.Snap;
+            barBar.ProgressColor = Common.Settings.ControlColor;
             barBar.CurrentTimeChanged += BarBar_CurrentTimeChanged;
 
             // Figure out the midi output device.
             for (int devindex = 0; devindex < MidiOut.NumberOfDevices; devindex++)
             {
-                if (_settings.MidiOutDevice == MidiOut.DeviceInfo(devindex).ProductName)
+                if (Common.Settings.MidiOutDevice == MidiOut.DeviceInfo(devindex).ProductName)
                 {
                     _midiOut = new MidiOut(devindex);
                     break;
@@ -130,13 +121,13 @@ namespace MidiStyleExplorer
             }
             if (_midiOut is null)
             {
-                MessageBox.Show($"Invalid midi device: {_settings.MidiOutDevice}");
+                MessageBox.Show($"Invalid midi device: {Common.Settings.MidiOutDevice}");
             }
 
             // Set up the channel/mute/solo grid.
-            cgChannels.AddStateType((int)PlayChannel.PlayMode.Normal, Color.Black, Color.AliceBlue);
-            cgChannels.AddStateType((int)PlayChannel.PlayMode.Solo, Color.Black, Color.LightGreen);
-            cgChannels.AddStateType((int)PlayChannel.PlayMode.Mute, Color.Black, Color.Salmon);
+            cgChannels.AddStateType((int)PlayMode.Normal, Color.Black, Color.AliceBlue);
+            cgChannels.AddStateType((int)PlayMode.Solo, Color.Black, Color.LightGreen);
+            cgChannels.AddStateType((int)PlayMode.Mute, Color.Black, Color.Salmon);
         }
 
         /// <summary>
@@ -178,10 +169,12 @@ namespace MidiStyleExplorer
         /// </summary>
         void SaveSettings()
         {
-            _settings.Volume = sldVolume.Value;
-            _settings.MainFormInfo = new Rectangle(Location.X, Location.Y, Width, Height);
+            Common.Settings.Volume = sldVolume.Value;
+            Common.Settings.MainFormInfo = new Rectangle(Location.X, Location.Y, Width, Height);
+            Common.Settings.Autoplay = btnAutoplay.Checked;
+            Common.Settings.Loop = btnLoop.Checked;
 
-            _settings.Save();
+            Common.Settings.Save();
         }
 
         /// <summary>
@@ -204,7 +197,7 @@ namespace MidiStyleExplorer
             {
                 Dock = DockStyle.Fill,
                 PropertySort = PropertySort.Categorized,
-                SelectedObject = _settings
+                SelectedObject = Common.Settings
             };
 
             // Detect changes of interest.
@@ -224,7 +217,7 @@ namespace MidiStyleExplorer
                 MessageBox.Show("Restart required for device changes to take effect");
             }
 
-            barBar.Snap = _settings.Snap;
+            barBar.Snap = Common.Settings.Snap;
 
             SaveSettings();
         }
@@ -274,7 +267,7 @@ namespace MidiStyleExplorer
             fileDropDownButton.DropDownItems.Add(new ToolStripMenuItem("Export...", null, Export_Click));
             fileDropDownButton.DropDownItems.Add(new ToolStripSeparator());
 
-            _settings.RecentFiles.ForEach(f =>
+            Common.Settings.RecentFiles.ForEach(f =>
             {
                 ToolStripMenuItem menuItem = new(f, null, new EventHandler(Recent_Click));
                 fileDropDownButton.DropDownItems.Add(menuItem);
@@ -326,7 +319,7 @@ namespace MidiStyleExplorer
         {
             Stop();
 
-            LogMessage("INFO", $"Opening file: {fn}");
+            LogMessage("INF", $"Opening file: {fn}");
 
             try
             {
@@ -370,11 +363,11 @@ namespace MidiStyleExplorer
 
                 _fn = fn;
                 Text = $"MidiStyleExplorer {MiscUtils.GetVersionString()} - {fn}";
-                _settings.RecentFiles.UpdateMru(fn);
+                Common.Settings.RecentFiles.UpdateMru(fn);
             }
             catch (Exception ex)
             {
-                LogMessage("ERROR", $"Couldn't open the file: {fn} because: {ex.Message}");
+                LogMessage("ERR", $"Couldn't open the file: {fn} because: {ex.Message}");
                 _fn = "";
                 Text = $"MidiStyleExplorer {MiscUtils.GetVersionString()} - No file loaded";
             }
@@ -394,7 +387,7 @@ namespace MidiStyleExplorer
                 // Downshift to time increments compatible with this system.
                 MidiTime mt = new()
                 {
-                    InternalPpq = PPQ,
+                    InternalPpq = Common.PPQ,
                     MidiPpq = _mfile.DeltaTicksPerQuarterNote,
                     Tempo = _mfile.Tempo
                 };
@@ -527,7 +520,7 @@ namespace MidiStyleExplorer
             if (_running)
             {
                 // Any soloes?
-                bool solo = _playChannels.Where(c => c.Mode == PlayChannel.PlayMode.Solo).Any();
+                bool solo = _playChannels.Where(c => c.Mode == PlayMode.Solo).Any();
 
                 // Process each channel.
                 foreach (var ch in _playChannels)
@@ -535,7 +528,7 @@ namespace MidiStyleExplorer
                     if (ch.Valid)
                     {
                         // Look for events to send.
-                        if (ch.Mode == PlayChannel.PlayMode.Solo || (!solo && ch.Mode == PlayChannel.PlayMode.Normal))
+                        if (ch.Mode == PlayMode.Solo || (!solo && ch.Mode == PlayMode.Normal))
                         {
                             // Process any sequence steps.
                             if (ch.Events.ContainsKey(barBar.Current.TotalSubdivs))
@@ -679,19 +672,6 @@ namespace MidiStyleExplorer
         #endregion
 
 
-
-        private void btnAutoplay_Click(object sender, EventArgs e)//TODO persist
-        {
-
-        }
-
-
-        private void btnLoop_Click(object sender, EventArgs e)//TODO persist
-        {
-
-        }
-
-
         //////////////////////// TODO all this leftover stuff ////////////////////////////////////////////////////////////////////////
         //////////////////////// TODO all this leftover stuff ////////////////////////////////////////////////////////////////////////
         //////////////////////// TODO all this leftover stuff ////////////////////////////////////////////////////////////////////////
@@ -704,20 +684,16 @@ namespace MidiStyleExplorer
         /// </summary>
         void Dump_Click(object? sender, EventArgs e)
         {
-            bool clip = true;
-
             //_mfile.DrumChannel = _drumChannel;
             //return _mfile.GetReadableGrouped();
-            var ds = _mfile.GetReadableContents();
-
-
+            var ds = _mfile.ReadableContents;
 
             if (ds.Count > 0)
             {
-               if (_settings.DumpToClip)
+               if (Common.Settings.DumpToClip)
                {
                    Clipboard.SetText(string.Join(Environment.NewLine, ds));
-                   LogMessage("INFO", "File dumped to clipboard");
+                   LogMessage("INF", "File dumped to clipboard");
                }
                else
                {
@@ -781,7 +757,7 @@ namespace MidiStyleExplorer
             // Downshift to time increments compatible with this application.
             MidiTime mt = new()
             {
-                InternalPpq = PPQ,
+                InternalPpq = Common.PPQ,
                 MidiPpq = _mfile.DeltaTicksPerQuarterNote,
                 Tempo = sldTempo.Value
             };
@@ -808,8 +784,8 @@ namespace MidiStyleExplorer
             // Figure out times.
             int lastSubdiv = _playChannels.Max(pc => pc.MaxSubdiv);
             // Round up to bar.
-            int floor = lastSubdiv / (PPQ * 4); // 4/4 only.
-            lastSubdiv = (floor + 1) * (PPQ * 4);
+            int floor = lastSubdiv / (Common.PPQ * 4); // 4/4 only.
+            lastSubdiv = (floor + 1) * (Common.PPQ * 4);
             // TODO????sldTempo.Value = _tempo;
 
             barBar.Length = new BarSpan(lastSubdiv);
@@ -869,25 +845,25 @@ namespace MidiStyleExplorer
 
             switch (pch.Mode)
             {
-                case PlayChannel.PlayMode.Normal:
-                    pch.Mode = PlayChannel.PlayMode.Solo;
+                case PlayMode.Normal:
+                    pch.Mode = PlayMode.Solo;
                     // Mute any other non-solo channels.
                     for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
                     {
-                        if (i != channel && _playChannels[i].Valid && _playChannels[i].Mode != PlayChannel.PlayMode.Solo)
+                        if (i != channel && _playChannels[i].Valid && _playChannels[i].Mode != PlayMode.Solo)
                         {
                             Kill(i);
                         }
                     }
                     break;
 
-                case PlayChannel.PlayMode.Solo:
-                    pch.Mode = PlayChannel.PlayMode.Mute;
+                case PlayMode.Solo:
+                    pch.Mode = PlayMode.Mute;
                     Kill(channel);
                     break;
 
-                case PlayChannel.PlayMode.Mute:
-                    pch.Mode = PlayChannel.PlayMode.Normal;
+                case PlayMode.Mute:
+                    pch.Mode = PlayMode.Normal;
                     break;
             }
 
@@ -918,7 +894,7 @@ namespace MidiStyleExplorer
             else
             {
                 //txtPatchChannel.Text = "";
-                LogMessage("ERROR", "Invalid patch channel");
+                LogMessage("ERR", "Invalid patch channel");
             }
         }
 
@@ -945,7 +921,7 @@ namespace MidiStyleExplorer
 
             Rewind();
 
-            if(_settings.Autoplay)
+            if(btnAutoplay.Checked)
             {
                 Play();
             }
