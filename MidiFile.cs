@@ -11,6 +11,137 @@ using NBagOfTricks;
 
 namespace MidiStyleExplorer
 {
+
+    /// <summary>Channel events and other properties.</summary>
+    //public class ProcessedEvents
+    //{
+    //    //// TODO UI stuff
+    //    ///// <summary>Actual 1-based midi channel number for UI.</summary>
+    //    //public int ChannelNumber { get; set; } = -1;
+
+    //    ///// <summary>For UI.</summary>
+    //    //public string Name { get; set; } = "";
+
+    //    ///// <summary>For muting/soloing.</summary>
+    //    //public PlayMode Mode { get; set; } = PlayMode.Normal;
+
+    //    #region Properties
+    //    /// <summary>Contains data?</summary>
+    //    public bool Valid { get { return Events.Count > 0; } }
+
+    //    /// <summary>Optional patch.</summary>
+    //    public int Patch { get; set; } = -1;
+
+    //    /// <summary>Music or control/meta.</summary>
+    //    public bool HasNotes { get; private set; } = false;
+
+    //    ///<summary>The main collection of events. The key is the subdiv/time.</summary>
+    //    public Dictionary<int, List<MidiEvent>> Events { get; set; } = new();
+
+    //    ///<summary>The duration of the whole channel.</summary>
+    //    public int MaxSubdiv { get; private set; } = 0;
+    //    #endregion
+
+    //    /// <summary>Add an event at the given subdiv.</summary>
+    //    /// <param name="subdiv"></param>
+    //    /// <param name="evt"></param>
+    //    public void AddEvent(int subdiv, MidiEvent evt)
+    //    {
+    //        if (!Events.ContainsKey(subdiv))
+    //        {
+    //            Events.Add(subdiv, new List<MidiEvent>());
+    //        }
+    //        Events[subdiv].Add(evt);
+    //        MaxSubdiv = Math.Max(MaxSubdiv, subdiv);
+    //        HasNotes |= evt is NoteEvent;
+    //    }
+
+    //    /// <summary>
+    //    /// Clean up before reading another pattern.
+    //    /// </summary>
+    //    public void Reset()
+    //    {
+    //        HasNotes = false;
+    //        Events.Clear();
+    //        MaxSubdiv = 0;
+    //    }
+
+    //    /// <summary>For viewing pleasure.</summary>
+    //    //public override string ToString()
+    //    //{
+    //    //    return $"PlayChannel: Name:{Name} ChannelNumber:{ChannelNumber} Mode:{Mode} Events:{Events.Count} MaxSubdiv:{MaxSubdiv}";
+    //    //}
+    //}
+
+
+    //class InternalEvent : MidiEvent
+    //{
+    //    //Capture(-1, "Other", -1, $"{me.GetType()} {me}");
+    //    //Capture(-1, "Section", -1, sectionName);
+    //    //Capture(-1, "Done", -1, "!!!");
+    //    //Capture(evt.AbsoluteTime, "NoteOn", evt.Channel, evt.ToString());
+    //    public string EventType { get; private set; } = "???";
+    //    public string Info { get; private set; } = "";
+    //    public InternalEvent(long absoluteTime, int channel, string etype, string info)
+    //    {
+    //        EventType = etype;
+    //        Info = info;
+    //        AbsoluteTime = absoluteTime;
+    //        Channel = channel;
+    //    }
+    //    public InternalEvent(string etype, string info) : this(-1, -1, etype, info)
+    //    {
+    //    }
+    //}
+
+    /// <summary>Properties associated with a pattern.</summary>
+    public class PatternInfo
+    {
+        /// <summary>Pattern name. Empty indicates single pattern aka plain midi file.</summary>
+        public string Name { get; set; } = "";
+
+        /// <summary>Tempo, if supplied by file. Defaults to 100 if missing.</summary>
+        public double Tempo { get; set; } = 100.0;
+
+        /// <summary>Time signature, if supplied by file.</summary>
+        public string TimeSig { get; set; } = "";
+
+        /// <summary>Key signature, if supplied by file.</summary>
+        public string KeySig { get; set; } = "";
+
+        /// <summary>Channel/patch info: key is 1-based channel number, value is 0-based patch.</summary>
+        //public Dictionary<int, int> Channels { get; private set; } = new();
+
+        /// <summary>All the channel patches. Index is 0-based channel number.</summary>
+        public int[] Patches = new int[MidiDefs.NUM_CHANNELS];
+
+        /// <summary>Normal constructor.</summary>
+        public PatternInfo()
+        {
+            for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
+            {
+                Patches[i] = -1;
+            }
+        }
+
+        /// <summary>Special copy constructor.</summary>
+        public PatternInfo(PatternInfo src, string name)
+        {
+            Name = name;
+            Tempo = src.Tempo;
+            TimeSig = src.TimeSig;
+            KeySig = src.KeySig;
+
+            for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
+            {
+                Patches[i] = src.Patches[i];
+            }
+        }
+    }
+
+
+
+
     /// <summary>
     /// Reads in and processes standard midi or yahama style files. Timestamps are from original file.
     /// Note: NAudio midi event channel numbers are 1-based.
@@ -18,7 +149,7 @@ namespace MidiStyleExplorer
     /// </summary>
     public class MidiFile
     {
-        #region Properties gleaned from the file
+        #region Properties - file level
         /// <summary>From where.</summary>
         public string Filename { get; private set; } = "";
 
@@ -31,24 +162,89 @@ namespace MidiStyleExplorer
         /// <summary>Resolution for all events.</summary>
         public int DeltaTicksPerQuarterNote { get; private set; } = 0;
 
-        /// <summary>Tempo, if supplied by file. Defaults to 100 if missing.</summary>
-        public double Tempo { get; set; } = 100.0;
-
-        /// <summary>Time signature, if supplied by file.</summary>
-        public string TimeSig { get; private set; } = "";
-
-        /// <summary>Key signature, if supplied by file.</summary>
-        public string KeySig { get; private set; } = "";
-
-        /// <summary>Channel/patch info: key is 1-based channel number, value is 0-based patch.</summary>
-        public Dictionary<int, int> Patches { get; private set; } = new();
-
-        /// <summary>All patterns in the file.</summary>
-        public List<string> AllPatterns { get; private set; } = new();
+        /// <summary>All pattern names in the file.</summary>
+      //  public List<string> AllPatterns { get; private set; } = new();
 
         /// <summary>File contents in readable form as they appear in order. Useful for debug.</summary>
-        public List<string> ReadableContents { get; private set; } = new();
+        //public List<string> ReadableContents { get; private set; } = new();
         #endregion
+
+
+
+        /// <summary>All file contents. Plain midi files will have only one.</summary>
+        public List<PatternInfo> Patterns { get; private set; } = new();
+
+
+
+        //#region Properties - section level
+        ///// <summary>Tempo, if supplied by file. Defaults to 100 if missing.</summary>
+        //public double Tempo { get; set; } = 100.0;
+
+        ///// <summary>Time signature, if supplied by file.</summary>
+        //public string TimeSig { get; private set; } = "";
+
+        ///// <summary>Key signature, if supplied by file.</summary>
+        //public string KeySig { get; private set; } = "";
+
+        ///// <summary>Channel/patch info: key is 1-based channel number, value is 0-based patch.</summary>
+        //public Dictionary<int, int> Channels { get; private set; } = new();
+        //#endregion
+
+
+
+        /// <summary>
+        /// Get requested events.
+        /// </summary>
+        /// <param name="pattern">Specific pattern.</param>
+        //void GetPatternEvents(string pattern)
+        //{
+        //    // Init internal structure.
+        //    _playChannels.ForEach(pc => pc.Reset());
+
+        //    // Downshift to time increments compatible with this application.
+        //    MidiTime mt = new()
+        //    {
+        //        InternalPpq = Common.PPQ,
+        //        MidiPpq = DeltaTicksPerQuarterNote,
+        //        Tempo = 0//sldTempo.Value
+        //    };
+
+        //    // Bin events by channel. Scale to internal ppq.
+        //    foreach (var ch in Channels)
+        //    {
+        //        _playChannels[ch.Key - 1].Patch = ch.Value;
+        //        var pevts = _mfile.GetEvents(pattern, ch.Key);
+
+        //        foreach (var te in pevts)
+        //        {
+        //            if (te.Channel - 1 < MidiDefs.NUM_CHANNELS) // midi is one-based
+        //            {
+        //                // Scale to internal.
+        //                long subdiv = mt.MidiToInternal(te.AbsoluteTime);
+
+        //                // Add to our collection.
+        //                _playChannels[te.Channel - 1].AddEvent((int)subdiv, te);
+        //            }
+        //        };
+        //    }
+
+        //    // Figure out times.
+        //    int lastSubdiv = _playChannels.Max(pc => pc.MaxSubdiv);
+        //    // Round up to bar.
+        //    int floor = lastSubdiv / (Common.PPQ * 4); // 4/4 only.
+        //    lastSubdiv = (floor + 1) * (Common.PPQ * 4);
+        //    // TODO????sldTempo.Value = _tempo;
+
+        //    barBar.Length = new BarSpan(lastSubdiv);
+        //    barBar.Start = BarSpan.Zero;
+        //    barBar.End = barBar.Length - BarSpan.OneSubdiv;
+        //    barBar.Current = BarSpan.Zero;
+        //}
+
+
+
+
+
 
         #region Properties set by client
         /// <summary>Sometimes drums are not on the default channel.</summary>
@@ -58,14 +254,22 @@ namespace MidiStyleExplorer
         public bool IgnoreNoisy { get; set; } = true;
         #endregion
 
+        public record EventXXX(string Pattern, int Channel, long AbsoluteTime, MidiEvent Event);
+        /// <summary>All the midi events. This is the verbatim content of the file with no processing.</summary>
+        List<EventXXX> _eventsX = new();
+
+
+        //readonly Dictionary<(string pattern, int channel), ProcessedEvents> _processedEvents = new();
+
+
         #region Fields
         /// <summary>All the midi events grouped by pattern/channel. This is the verbatim content of the file with no processing.</summary>
-        readonly List<(string pattern, int channel, MidiEvent evt)> _midiEvents = new();
+        //readonly List<(string pattern, int channel, MidiEvent evt)> _midiEvents = new();
 
-        /// <summary>Current pattern.</summary>
-        string _currentPattern = "";
+        /// <summary>Current pattern during parsing. Empty indicates single pattern aka plain midi file.</summary>
+        //string _currentPattern = "";
 
-        /// <summary>Save this for maybe logging.</summary>
+        /// <summary>Save this for logging/debugging.</summary>
         long _lastStreamPos = 0;
         #endregion
 
@@ -77,17 +281,20 @@ namespace MidiStyleExplorer
         public void ProcessFile(string fn)
         {
             // Init everything.
-            _midiEvents.Clear();
+            //_midiEvents.Clear();
+            _eventsX.Clear();
+            Patterns.Count();
+            Patterns.Add(new()); // always one
             Filename = fn;
-            AllPatterns.Clear();
-            Patches.Clear();
             DeltaTicksPerQuarterNote = 0;
-            Tempo = 100;
-            TimeSig = "";
-            KeySig = "";
+            //AllPatterns.Clear();
+            //Channels.Clear();
+            //Tempo = 100;
+            //TimeSig = "";
+            //KeySig = "";
 
-            ReadableContents.Clear();
-            ReadableContents.Add($"Timestamp,Type,Pattern,Channel,FilePos,Content");
+            //ReadableContents.Clear();
+            //ReadableContents.Add($"Timestamp,Type,Pattern,Channel,FilePos,Content");
 
             using var br = new BinaryReader(File.OpenRead(fn));
             bool done = false;
@@ -96,7 +303,7 @@ namespace MidiStyleExplorer
             {
                 var sectionName = Encoding.UTF8.GetString(br.ReadBytes(4));
 
-                Capture(-1, "Section", -1, sectionName);
+                //Capture(-1, "Section", -1, sectionName);
 
                 switch (sectionName)
                 {
@@ -137,25 +344,52 @@ namespace MidiStyleExplorer
                         break;
 
                     default:
-                        Capture(-1, "Done", -1, "!!!");
+                        //Capture(-1, "Done", -1, "!!!");
                         done = true;
                         break;
                 }
             }
         }
 
+
+
+
+
+        public PatternInfo? GetPatternInfo(string pname)
+        {
+            var ret = Patterns.Where(p => p.Name == pname).First();
+            return ret;
+        }
+
+
+
         /// <summary>
         /// Helper to get an event collection.
         /// </summary>
-        /// <param name="channel">Specific channel or empty/null for all.</param>
+        /// <param name="pname">Specific pattern name.</param>
         /// <returns>The collection or null if invalid.</returns>
-        public IEnumerable<MidiEvent> GetEvents(string? pattern, int channel)
+        public IEnumerable<EventXXX> GetEvents(string pname)
         {
-            IEnumerable<MidiEvent> ret = string.IsNullOrEmpty(pattern) ?
-                _midiEvents.Where(v => v.channel == channel).Select(v => v.evt) :
-                _midiEvents.Where(v => v.pattern == pattern && v.channel == channel).Select(v => v.evt);
+            IEnumerable<EventXXX> ret = _eventsX.Where(v => v.Pattern == pname);
             return ret;
         }
+
+        /// <summary>
+        /// Helper to get an event collection.
+        /// </summary>
+        /// <param name="papnamettern">Specific pattern name.</param>
+        /// <param name="channel">Specific channel.</param>
+        /// <returns>The collection or null if invalid.</returns>
+        public IEnumerable<EventXXX> GetEvents(string pname, int channel)
+        {
+            IEnumerable<EventXXX> ret = _eventsX.Where(v => v.Pattern == pname && v.Channel == channel);
+            return ret;
+        }
+
+
+
+
+
         #endregion
 
         #region Section readers
@@ -201,6 +435,14 @@ namespace MidiStyleExplorer
             //int chnum = 0;
             //string chdesc = "???";
 
+            // Downshift to time increments compatible with this application.
+            MidiTime mt = new()
+            {
+                InternalPpq = Common.PPQ,
+                MidiPpq = DeltaTicksPerQuarterNote,
+                Tempo = 0
+            };
+
             uint chunkSize = Read(br, 4);
             long startPos = br.BaseStream.Position;
             int absoluteTime = 0;
@@ -215,29 +457,29 @@ namespace MidiStyleExplorer
                 absoluteTime += me.DeltaTime;
                 me.AbsoluteTime = absoluteTime;
 
-                if (!Patches.ContainsKey(me.Channel))
-                {
-                    Patches.Add(me.Channel, -1);
-                }
+                //if (!Channels.ContainsKey(me.Channel))
+                //{
+                //    Channels.Add(me.Channel, -1);
+                //}
 
                 switch (me)
                 {
                     ///// Standard midi events /////
                     case NoteOnEvent evt:
                         AddMidiEvent(evt);
-                        Capture(evt.AbsoluteTime, "NoteOn", evt.Channel, evt.ToString());
+                        //Capture(evt.AbsoluteTime, "NoteOn", evt.Channel, evt.ToString());
                         break;
 
                     case NoteEvent evt:
                         AddMidiEvent(evt);
-                        Capture(evt.AbsoluteTime, "NoteOff", evt.Channel, evt.ToString());
+                        //Capture(evt.AbsoluteTime, "NoteOff", evt.Channel, evt.ToString());
                         break;
 
                     case ControlChangeEvent evt:
                         if (!IgnoreNoisy)
                         {
                             AddMidiEvent(evt);
-                            Capture(evt.AbsoluteTime, "ControlChange", evt.Channel, evt.ToString());
+                            //Capture(evt.AbsoluteTime, "ControlChange", evt.Channel, evt.ToString());
                         }
                         break;
 
@@ -250,65 +492,86 @@ namespace MidiStyleExplorer
 
                     case PatchChangeEvent evt:
                         //chdesc = PatchChangeEvent.GetPatchName(evt.Patch);
-                        Patches[evt.Channel] = evt.Patch;
+                        Patterns.Last().Patches[evt.Channel] = evt.Patch;
                         AddMidiEvent(evt);
-                        Capture(evt.AbsoluteTime, "PatchChangeEvent", evt.Channel, evt.ToString());
+                        //Capture(evt.AbsoluteTime, "PatchChangeEvent", evt.Channel, evt.ToString());
                         break;
 
                     case SysexEvent evt:
                         if (!IgnoreNoisy)
                         {
-                            string s = evt.ToString().Replace(Environment.NewLine, " ");
-                            Capture(evt.AbsoluteTime, "Sysex", evt.Channel, s);
+                            AddMidiEvent(evt);
+                            //string s = evt.ToString().Replace(Environment.NewLine, " ");
+                            //Capture(evt.AbsoluteTime, "Sysex", evt.Channel, s);
                         }
                         break;
 
                     ///// Meta events /////
                     case TrackSequenceNumberEvent evt:
-                        Capture(evt.AbsoluteTime, "TrackSequenceNumber", evt.Channel, evt.ToString());
+                        AddMidiEvent(evt);
+                        //Capture(evt.AbsoluteTime, "TrackSequenceNumber", evt.Channel, evt.ToString());
                         break;
 
                     case TempoEvent evt:
-                        Tempo = evt.Tempo;
-                        Capture(evt.AbsoluteTime, "SetTempo", evt.Channel, evt.Tempo.ToString());
+                        Patterns.Last().Tempo = evt.Tempo;
+                        AddMidiEvent(evt);
+                        //Capture(evt.AbsoluteTime, "SetTempo", evt.Channel, evt.Tempo.ToString());
                         break;
 
                     case TimeSignatureEvent evt:
-                        TimeSig = evt.TimeSignature;
-                        Capture(evt.AbsoluteTime, "TimeSignature", evt.Channel, evt.TimeSignature);
+                        Patterns.Last().TimeSig = evt.TimeSignature;
+                        AddMidiEvent(evt);
+                        //Capture(evt.AbsoluteTime, "TimeSignature", evt.Channel, evt.TimeSignature);
                         break;
 
                     case KeySignatureEvent evt:
-                        KeySig = evt.ToString();
-                        Capture(evt.AbsoluteTime, "KeySignature", evt.Channel, evt.ToString());
+                        Patterns.Last().KeySig = evt.ToString();
+                        AddMidiEvent(evt);
+                        //Capture(evt.AbsoluteTime, "KeySignature", evt.Channel, evt.ToString());
                         break;
 
                     case TextEvent evt when evt.MetaEventType == MetaEventType.SequenceTrackName:
-                        Capture(evt.AbsoluteTime, "SequenceTrackName", evt.Channel, evt.Text);
+                        AddMidiEvent(evt);
+                        //Capture(evt.AbsoluteTime, "SequenceTrackName", evt.Channel, evt.Text);
                         break;
 
                     case TextEvent evt when evt.MetaEventType == MetaEventType.Marker:
                         // Indicates start of a new midi pattern.
-                        Capture(evt.AbsoluteTime, "Marker", evt.Channel, evt.Text);
-                        _currentPattern = evt.Text;
-                        AllPatterns.Add(_currentPattern);
+                        //Capture(evt.AbsoluteTime, "Marker", evt.Channel, evt.Text);
+                        if(Patterns.Last().Name == "")
+                        {
+                            // It's the default/single pattern so update its name.
+                            Patterns.Last().Name = evt.Text;
+                        }
+                        else
+                        {
+                            // Add a new pattern with defaults set to previous one.
+                            Patterns.Add(new(Patterns.Last(), evt.Text));
+                        }
+
+
+                        //_currentPattern = evt.Text;
+                        //AllPatterns.Add(_currentPattern);
                         absoluteTime = 0;
+                        AddMidiEvent(evt);
                         break;
 
                     case TextEvent evt when evt.MetaEventType == MetaEventType.TextEvent:
-                        Capture(evt.AbsoluteTime, "TextEvent", evt.Channel, evt.Text);
+                        AddMidiEvent(evt);
+                        //Capture(evt.AbsoluteTime, "TextEvent", evt.Channel, evt.Text);
                         break;
 
                     case MetaEvent evt when evt.MetaEventType == MetaEventType.EndTrack:
                         // Indicates end of current midi track.
-                        Capture(evt.AbsoluteTime, "EndTrack", evt.Channel, evt.ToString());
-                        _currentPattern = "";
+                        //Capture(evt.AbsoluteTime, "EndTrack", evt.Channel, evt.ToString());
+                        AddMidiEvent(evt);
+                        //_currentPattern = "";
                         break;
 
                     default:
                         // Other MidiCommandCodes: AutoSensing, ChannelAfterTouch, ContinueSequence, Eox, KeyAfterTouch, StartSequence, StopSequence, TimingClock
                         // Other MetaEventType: Copyright, CuePoint, DeviceName, Lyric, MidiChannel, MidiPort, ProgramName, SequencerSpecific, SmpteOffset, TrackInstrumentName
-                        Capture(-1, "Other", -1, $"{me.GetType()} {me}");
+                        //Capture(-1, "Other", -1, $"{me.GetType()} {me}");
                         break;
                 }
             }
@@ -316,7 +579,9 @@ namespace MidiStyleExplorer
             ///// Local function. /////
             void AddMidiEvent(MidiEvent evt)
             {
-                _midiEvents.Add((_currentPattern, evt.Channel, evt));
+                long scaledTime = mt.MidiToInternal(evt.AbsoluteTime);
+                _eventsX.Add(new EventXXX(Patterns.Last().Name, evt.Channel, scaledTime, evt));
+                //_midiEvents.Add((_currentPattern, evt.Channel, evt));
             }
 
             return absoluteTime;
@@ -400,7 +665,13 @@ namespace MidiStyleExplorer
         /// <returns></returns>
         public List<string> GetReadableContents()
         {
-            return ReadableContents;
+            List<string> contents = new();
+            contents.Add($"Timestamp,Type,Pattern,Channel,FilePos,Content");
+
+            _eventsX.OrderBy(v => v.AbsoluteTime).
+                ForEach(evt => contents.Add($"{evt.AbsoluteTime},{evt.GetType()},{evt.Pattern},{evt.Channel},{_lastStreamPos},{evt}"));
+
+            return contents;
         }
 
         /// <summary>
@@ -433,13 +704,13 @@ namespace MidiStyleExplorer
                 "Time,Event,Channel,Pattern,Val1,Val2,Val3",
             };
 
-            foreach (var me in _midiEvents)
+            foreach (var me in _eventsX)
             {
                 // Boilerplate.
-                string ntype = me.evt.GetType().ToString().Replace("NAudio.Midi.", "");
-                string sc = $"{me.evt.AbsoluteTime},{ntype},{me.evt.Channel},{me.pattern}";
+                string ntype = me.Event.GetType().ToString().Replace("NAudio.Midi.", "");
+                string sc = $"{me.Event.AbsoluteTime},{ntype},{me.Event.Channel},{me.Pattern}";
 
-                switch (me.evt)
+                switch (me.Event)
                 {
                     case NoteOnEvent evt:
                         int len = evt.OffEvent is null ? 0 : evt.NoteLength; // NAudio NoteLength bug.
@@ -509,11 +780,14 @@ namespace MidiStyleExplorer
         /// <param name="info">Extra info to add to midi file.</param>
         public void ExportMidi(string fn, string pattern, string info)
         {
+            // Get pattern info. This should work for the simple midi file case too.
+            PatternInfo pinfo = Patterns.First(p => p.Name == pattern);
+
             MidiEventCollection mecoll = new(1, DeltaTicksPerQuarterNote);
             IList<MidiEvent> mevents = mecoll.AddTrack();
 
             // Tempo.
-            mevents.Add(new TempoEvent(0, 0) { Tempo = Tempo });
+            mevents.Add(new TempoEvent(0, 0) { Tempo = pinfo.Tempo });
 
             // General info.
             mevents.Add(new TextEvent(info, MetaEventType.TextEvent, 0));
@@ -523,16 +797,19 @@ namespace MidiStyleExplorer
             //lhdr.Add(new KeySignatureEvent(0, 0, 0));
 
             // Patches.
-            Patches.Where(c => c.Value != -1).ForEach(c => mevents.Add(new PatchChangeEvent(0, c.Key, c.Value)));
-
+            for(int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
+            {
+                if(pinfo.Patches[i] != -1)
+                {
+                    mevents.Add(new PatchChangeEvent(0, i + 1, pinfo.Patches[i]));
+                }
+            }
             // Collect the midi events for this pattern ordered by timestamp.
-            IEnumerable<MidiEvent> evts = string.IsNullOrEmpty(pattern) ?
-                _midiEvents.Select(v => v.evt).OrderBy(v => v.AbsoluteTime) :
-                _midiEvents.Where(v => v.pattern == pattern).Select(v => v.evt).OrderBy(v => v.AbsoluteTime);
+            IEnumerable<EventXXX> evts = _eventsX.Where(v => v.Pattern == pattern).OrderBy(v => v.AbsoluteTime);
             long ltime = evts.Last().AbsoluteTime;
 
             // Copy to output.
-            evts.ForEach(e => mevents.Add(e));
+            evts.ForEach(e => mevents.Add(e.Event));
 
             // End track.
             var endt = new MetaEvent(MetaEventType.EndTrack, 0, ltime);
@@ -550,10 +827,10 @@ namespace MidiStyleExplorer
         /// <param name="etype"></param>
         /// <param name="channel"></param>
         /// <param name="content"></param>
-        void Capture(long timestamp, string etype, int channel, string content)
-        {
-            ReadableContents.Add($"{timestamp},{etype},{_currentPattern},{channel},{_lastStreamPos},{content.Replace(',', '_')}");
-        }
+        //void Capture(long timestamp, string etype, int channel, string content)
+        //{
+        //    ReadableContents.Add($"{timestamp},{etype},{_currentPattern},{channel},{_lastStreamPos},{content.Replace(',', '_')}");
+        //}
 
         /// <summary>
         /// Read a number and adjust endianess.
