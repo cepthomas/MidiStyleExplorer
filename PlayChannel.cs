@@ -143,9 +143,9 @@ namespace MidiStyleExplorer
                     chkSolo.Checked = false;
                 }
 
-                var st = PlayMode.Normal;
-                if (chkSolo.Checked) { st = PlayMode.Solo; }
-                else if (chkMute.Checked) { st = PlayMode.Mute; }
+                _mode = PlayMode.Normal;
+                if (chkSolo.Checked) { _mode = PlayMode.Solo; }
+                else if (chkMute.Checked) { _mode = PlayMode.Mute; }
             }
         }
 
@@ -156,7 +156,6 @@ namespace MidiStyleExplorer
         public override string ToString()
         {
             return $"PlayChannel: Patch:{Patch} ChannelNumber:{ChannelNumber} Mode:{Mode}";
-            //return $"PlayChannel: Name:{ChannelName} ChannelNumber:{ChannelNumber} Mode:{Mode} Events:{Events.Count} MaxSubdiv:{MaxSubdiv}";
         }
     }
 }
