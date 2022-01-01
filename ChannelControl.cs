@@ -12,37 +12,19 @@ using System.Windows.Forms;
 namespace MidiStyleExplorer
 {
     /// <summary>Channel events and other properties.</summary>
-    public partial class PlayChannel : UserControl
+    public partial class ChannelControl : UserControl
     {
-        // TODDO UI aspects:
-        // patch -> selector. event to host.
-        // map S/M buttons to State. event to host
-        // map vol to control
+        #region Events
+        /// <summary>Notify client of asynchronous changes.</summary>
+        public event EventHandler<ChannelChangeEventArgs>? ChannelChange;
+        public class ChannelChangeEventArgs : EventArgs
+        {
+            public bool PatchChange { get; set; } = false;
+            public bool StateChange { get; set; } = false;
+        }
+        #endregion
 
-        ///////////////////////////////////////////////////////////////////////////
-        ////////////////// TODO need home for these ///////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////
-
-        /// <summary>Contains data?</summary>
-        public bool Valid { get { return EventsXXX.Count > 0; } }
-
-        /// <summary>Music or control/meta.</summary>
-        public bool HasNotes { get; private set; } = false;
-
-        ///<summary>The main collection of events. The key is the subdiv/time.</summary>
-        public Dictionary<int, List<MidiFile.EventXXX>> EventsXXX { get; set; } = new();
-
-        ///<summary>The duration of the whole channel.</summary>
-        public int MaxSubdiv { get; private set; } = 0;
-
-        ///////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////
-
-
-
-
-
+        #region Properties
         /// <summary>Actual 1-based midi channel number for UI.</summary>
         public int ChannelNumber
         {
@@ -52,12 +34,12 @@ namespace MidiStyleExplorer
         int _channelNumber = -1;
 
         /// <summary>For muting/soloing.</summary>
-        public PlayMode Mode
+        public PlayState State
         {
-            get { return _mode; }
-            set { _mode = value; SetModeUi(); }
+            get { return _state; }
+            set { _state = value; SetModeUi(); }
         }
-        PlayMode _mode = PlayMode.Normal;
+        PlayState _state = PlayState.Normal;
 
         /// <summary>Current patch.</summary>
         public int Patch
@@ -72,11 +54,12 @@ namespace MidiStyleExplorer
             get { return sldVolume.Value; }
             set { sldVolume.Value = Math.Min(value, 1.0); }
         }
+        #endregion
 
         /// <summary>
         /// Constructor.
         /// </summary>
-        public PlayChannel()
+        public ChannelControl()
         {
             InitializeComponent();
         }
@@ -86,12 +69,15 @@ namespace MidiStyleExplorer
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void PlayChannel_Load(object? sender, EventArgs e)
+        void ChannelControl_Load(object? sender, EventArgs e)
         {
             sldVolume.DrawColor = Common.Settings.ControlColor;
             chkSolo.BackColor = Common.Settings.ControlColor;
             chkMute.BackColor = Common.Settings.ControlColor;
 
+            chkSolo.CheckedChanged += Check_Click;
+            chkMute.CheckedChanged += Check_Click;
+            cmbPatch.SelectedIndexChanged += Patch_SelectedIndexChanged;
             SetModeUi();
 
             // Fill patch list.
@@ -107,17 +93,17 @@ namespace MidiStyleExplorer
         /// </summary>
         void SetModeUi()
         {
-            switch (_mode)
+            switch (_state)
             {
-                case PlayMode.Normal:
+                case PlayState.Normal:
                     chkSolo.Checked = false;
                     chkMute.Checked = false;
                     break;
-                case PlayMode.Solo:
+                case PlayState.Solo:
                     chkSolo.Checked = true;
                     chkMute.Checked = false;
                     break;
-                case PlayMode.Mute:
+                case PlayState.Mute:
                     chkSolo.Checked = false;
                     chkMute.Checked = true;
                     break;
@@ -143,10 +129,22 @@ namespace MidiStyleExplorer
                     chkSolo.Checked = false;
                 }
 
-                _mode = PlayMode.Normal;
-                if (chkSolo.Checked) { _mode = PlayMode.Solo; }
-                else if (chkMute.Checked) { _mode = PlayMode.Mute; }
+                _state = PlayState.Normal;
+                if (chkSolo.Checked) { _state = PlayState.Solo; }
+                else if (chkMute.Checked) { _state = PlayState.Mute; }
+
+                ChannelChange?.Invoke(this, new ChannelChangeEventArgs() { StateChange = true });
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void Patch_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            ChannelChange?.Invoke(this, new ChannelChangeEventArgs() { PatchChange = true });
         }
 
         /// <summary>
@@ -155,7 +153,7 @@ namespace MidiStyleExplorer
         /// <returns></returns>
         public override string ToString()
         {
-            return $"PlayChannel: Patch:{Patch} ChannelNumber:{ChannelNumber} Mode:{Mode}";
+            return $"ChannelControl: Patch:{Patch} ChannelNumber:{ChannelNumber} Mode:{State}";
         }
     }
 }

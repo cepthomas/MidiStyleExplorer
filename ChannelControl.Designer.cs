@@ -1,7 +1,7 @@
 ﻿
 namespace MidiStyleExplorer
 {
-    partial class PlayChannel
+    partial class ChannelControl
     {
         /// <summary> 
         /// Required designer variable.
@@ -93,7 +93,7 @@ namespace MidiStyleExplorer
             this.cmbPatch.Size = new System.Drawing.Size(104, 28);
             this.cmbPatch.TabIndex = 44;
             // 
-            // PlayChannel
+            // ChannelControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -102,9 +102,9 @@ namespace MidiStyleExplorer
             this.Controls.Add(this.lblNumber);
             this.Controls.Add(this.chkMute);
             this.Controls.Add(this.chkSolo);
-            this.Name = "PlayChannel";
+            this.Name = "ChannelControl";
             this.Size = new System.Drawing.Size(312, 38);
-            this.Load += new System.EventHandler(this.PlayChannel_Load);
+            this.Load += new System.EventHandler(this.ChannelControl_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

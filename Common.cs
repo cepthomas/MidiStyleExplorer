@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace MidiStyleExplorer
 {
    /// <summary>Channel state.</summary>
-    public enum PlayMode { Normal = 0, Solo = 1, Mute = 2 }
+    public enum PlayState { Normal = 0, Solo = 1, Mute = 2 }
 
     public class Common
     {
@@ -23,15 +23,15 @@ namespace MidiStyleExplorer
         public static UserSettings Settings { get; set; } = new UserSettings();
     }
 
-    /// <summary>Player has something to say or show.</summary>
-    public class LogEventArgs : EventArgs
-    {
-        public string Category { get; private set; } = "";
-        public string Message { get; private set; } = "";
-        public LogEventArgs(string cat, string msg)
-        {
-            Category = cat;
-            Message = msg;
-        }
-    }
+    ///// <summary>Player has something to say or show.</summary>
+    //public class LogEventArgs : EventArgs
+    //{
+    //    public string Category { get; private set; } = "";
+    //    public string Message { get; private set; } = "";
+    //    public LogEventArgs(string cat, string msg)
+    //    {
+    //        Category = cat;
+    //        Message = msg;
+    //    }
+    //}
 }
