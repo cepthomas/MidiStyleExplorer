@@ -35,10 +35,10 @@ namespace MidiStyleExplorer
         {
             if(which < 0 || which > MAX_MIDI)
             {
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException(nameof(which));
             }
 
-            return _instrumentDefs[which];
+            return _instrumentNames[which];
         }
 
         /// <summary>
@@ -50,10 +50,10 @@ namespace MidiStyleExplorer
         {
             if (which < 0 || which > MAX_MIDI)
             {
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException(nameof(which));
             }
 
-            return _drumDefs[which];
+            return _drumNames[which];
         }
 
         /// <summary>
@@ -65,10 +65,10 @@ namespace MidiStyleExplorer
         {
             if (which < 0 || which > MAX_MIDI)
             {
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException(nameof(which));
             }
 
-            return _controllerDefs[which];
+            return _controllerNames[which];
         }
 
         /// <summary>
@@ -89,7 +89,7 @@ namespace MidiStyleExplorer
         static readonly string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 
         /// <summary>The midi instrument definitions.</summary>
-        static readonly string[] _instrumentDefs = new string[]
+        static readonly string[] _instrumentNames = new string[]
         {
             "AcousticGrandPiano", "BrightAcousticPiano", "ElectricGrandPiano", "HonkyTonkPiano", "ElectricPiano1", "ElectricPiano2", "Harpsichord",
             "Clavinet", "Celesta", "Glockenspiel", "MusicBox", "Vibraphone", "Marimba", "Xylophone", "TubularBells", "Dulcimer", "DrawbarOrgan",
@@ -109,7 +109,7 @@ namespace MidiStyleExplorer
         };
 
         /// <summary>The midi drum definitions.</summary>
-        static readonly string[] _drumDefs = new string[]
+        static readonly string[] _drumNames = new string[]
         {
             "D000", "D001", "D002", "D003", "D004", "D005", "D006", "D007", "D008", "D009", "D010", "D011", "D012", "D013", "D014", "D015",
             "D016", "D017", "D018", "D019", "D020", "D021", "D022", "D023", "D024", "D025", "D026", "D027", "D028", "D029", "D030", "D031",
@@ -125,7 +125,7 @@ namespace MidiStyleExplorer
         };
 
         /// <summary>The midi controller definitions.</summary>
-        static readonly string[] _controllerDefs = new string[]
+        static readonly string[] _controllerNames = new string[]
         {
             "BankSelect", "Modulation", "BreathController", "C003", "FootController", "PortamentoTime", "C006", "Volume", "Balance", "C009",
             "Pan", "Expression", "C012", "C013", "C014", "C015", "C016", "C017", "C018", "C019", "C020", "C021", "C022", "C023", "C024",

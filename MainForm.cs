@@ -35,7 +35,7 @@ namespace MidiStyleExplorer
         /// <summary>Some midi files have drums on a different channel so allow the user to re-map.</summary>
         int _drumChannel = MidiDefs.DEFAULT_DRUM_CHANNEL;
 
-        /// <summary>All the channel controls and data.</summary>
+        /// <summary>All the channel controls and data for current pattern.</summary>
         readonly List<(ChannelControl control, ChannelEvents events)> _channels = new();
         #endregion
 
@@ -107,6 +107,8 @@ namespace MidiStyleExplorer
             {
                 MessageBox.Show($"Invalid midi device: {Common.Settings.MidiOutDevice}");
             }
+
+            LogMessage("INF", "C to clear, W to wrap");
         }
 
         /// <summary>
@@ -216,7 +218,7 @@ namespace MidiStyleExplorer
         /// <param name="msg"></param>
         void LogMessage(string cat, string msg)
         {
-            int catSize = 5;
+            int catSize = 3;
             cat = cat.Length >= catSize ? cat.Left(catSize) : cat.PadRight(catSize);
 
             // May come from a different thread.
@@ -298,17 +300,17 @@ namespace MidiStyleExplorer
                 Rewind();
 
                 // Clean out old.
-                foreach (var ch in _channels)
+                foreach (var (control, events) in _channels)
                 {
-                    Controls.Remove(ch.control);
+                    Controls.Remove(control);
                 }
                 _channels.Clear();
 
                 // Process the file.
                 _mfile = new MidiFile { IgnoreNoisy = true };
-                _mfile.ProcessFile(fn);
+                _mfile.Read(fn);
                 // All channel numbers.
-                var channels = _mfile.GetChannels();
+                var channels = _mfile.AllEvents.Select(e => e.Channel).Distinct().OrderBy(e => e);
 
                 // Make new controls and data holders.
                 int x = barBar.Left;
@@ -321,18 +323,26 @@ namespace MidiStyleExplorer
                         Location = new(x, y)
                     };
 
-                    y += ctrl.Height + 5;
-
                     ctrl.ChannelChange += ChannelChange;
                     Controls.Add(ctrl);
                     _channels.Add((ctrl, new()));
+
+                    if(_channels.Count % 8 == 0)
+                    {
+                        x = ctrl.Right + 5;
+                        y = lbPatterns.Top;
+                    }
+                    else
+                    {
+                        y += ctrl.Height + 5;
+                    }
                 }
 
                 // Init new stuff with contents of file/pattern.
                 if (_mfile.Filename.EndsWith(".mid"))
                 {
                     var pinfo = _mfile.Patterns[0];
-                    InitFromPattern(pinfo);
+                    GetPatternEvents(pinfo);
                 }
                 else // .sty
                 {
@@ -351,7 +361,7 @@ namespace MidiStyleExplorer
                                 break;
 
                             default:
-                                lbPatterns.Items.Add(p);
+                                lbPatterns.Items.Add(p.Name);
                                 break;
                         }
                     }
@@ -359,12 +369,18 @@ namespace MidiStyleExplorer
                     if (lbPatterns.Items.Count > 0)
                     {
                         var pinfo = GetPatternInfo(lbPatterns.Items[0].ToString()!);
-                        InitFromPattern(pinfo!);
+                        GetPatternEvents(pinfo!);
                     }
                 }
 
                 Text = $"MidiStyleExplorer {MiscUtils.GetVersionString()} - {fn}";
                 Common.Settings.RecentFiles.UpdateMru(fn);
+
+                Rewind();
+                if (btnAutoplay.Checked)
+                {
+                    Play();
+                }
             }
             catch (Exception ex)
             {
@@ -381,30 +397,34 @@ namespace MidiStyleExplorer
         /// <returns></returns>
         bool Play()
         {
-            // Start or restart?
-            if (!_running)
+            this.InvokeIfRequired(_ =>
             {
-                // Convert tempo to period.
-                MidiTime mt = new()
+                // Start or restart?
+                if (!_running)
                 {
-                    InternalPpq = Common.PPQ,
-                    MidiPpq = _mfile.DeltaTicksPerQuarterNote,
-                    Tempo = sldTempo.Value
-                };
+                    // Convert tempo to period.
+                    MidiTime mt = new()
+                    {
+                        InternalPpq = Common.PPQ,
+                        MidiPpq = _mfile.DeltaTicksPerQuarterNote,
+                        Tempo = sldTempo.Value
+                    };
 
-                // Create periodic timer.
-                double period = mt.RoundedInternalPeriod();
-                _mmTimer.SetTimer((int)Math.Round(period), MmTimerCallback);
-                _mmTimer.Start();
+                    // Create periodic timer.
+                    double period = mt.RoundedInternalPeriod();
+                    _mmTimer.SetTimer((int)Math.Round(period), MmTimerCallback);
+                    _mmTimer.Start();
 
-                _running = true;
-            }
-            else
-            {
-                Rewind();
-            }
+                    _running = true;
+                }
+                else
+                {
+                    Rewind();
+                }
 
-            SetPlayCheck(true);
+                SetPlayCheck(true);
+            });
+
             return true;
         }
 
@@ -441,27 +461,6 @@ namespace MidiStyleExplorer
         void Play_CheckedChanged(object? sender, EventArgs e)
         {
             var _ = chkPlay.Checked ? Play() : Stop();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void Player_PlaybackCompleted(object? sender, EventArgs e)
-        {
-            // Usually comes from a different thread.
-            this.InvokeIfRequired(_ =>
-            {
-                if (btnLoop.Checked)
-                {
-                    Play();
-                }
-                else
-                {
-                    Rewind();
-                }
-            });
         }
 
         /// <summary>
@@ -506,8 +505,11 @@ namespace MidiStyleExplorer
         /// </summary>
         public void Rewind()
         {
-            Stop();
-            barBar.Current = BarSpan.Zero;
+            this.InvokeIfRequired(_ =>
+            {
+                Stop();
+                barBar.Current = BarSpan.Zero;
+            });
         }
         #endregion
 
@@ -523,22 +525,22 @@ namespace MidiStyleExplorer
                 bool solo = _channels.Where(c => c.control.State == PlayState.Solo).Any();
 
                 // Process each channel.
-                foreach (var ch in _channels)
+                foreach (var (control, events) in _channels)
                 {
-                    if (ch.events.Valid)
+                    if (events.Valid)
                     {
                         // Look for events to send.
-                        if (ch.control.State == PlayState.Solo || (!solo && ch.control.State == PlayState.Normal))
+                        if (control.State == PlayState.Solo || (!solo && control.State == PlayState.Normal))
                         {
                             // Process any sequence steps.
-                            if (ch.events.Events.ContainsKey(barBar.Current.TotalSubdivs))
+                            if (events.MidiEvents.ContainsKey(barBar.Current.TotalSubdivs))
                             {
-                                foreach (var mevt in ch.events.Events[barBar.Current.TotalSubdivs])
+                                foreach (var mevt in events.MidiEvents[barBar.Current.TotalSubdivs])
                                 {
-                                    switch (mevt.MidiEvent)
+                                    switch (mevt)
                                     {
                                         case NoteOnEvent evt:
-                                            if (ch.control.ChannelNumber == _drumChannel && evt.Velocity == 0)
+                                            if (control.ChannelNumber == _drumChannel && evt.Velocity == 0)
                                             {
                                                 // Skip drum noteoffs as windows GM doesn't like them.
                                             }
@@ -547,7 +549,7 @@ namespace MidiStyleExplorer
                                                 // Adjust volume and maybe drum channel. Also NAudio NoteLength bug.
                                                 NoteOnEvent ne = new(
                                                     evt.AbsoluteTime,
-                                                    ch.control.ChannelNumber == _drumChannel ? MidiDefs.DEFAULT_DRUM_CHANNEL : evt.Channel,
+                                                    control.ChannelNumber == _drumChannel ? MidiDefs.DEFAULT_DRUM_CHANNEL : evt.Channel,
                                                     evt.NoteNumber,
                                                     (int)(evt.Velocity * sldVolume.Value),
                                                     evt.OffEvent is null ? 0 : evt.NoteLength);
@@ -557,7 +559,7 @@ namespace MidiStyleExplorer
                                             break;
 
                                         case NoteEvent evt:
-                                            if (ch.control.ChannelNumber == _drumChannel)
+                                            if (control.ChannelNumber == _drumChannel)
                                             {
                                                 // Skip drum noteoffs as windows GM doesn't like them.
                                             }
@@ -568,7 +570,7 @@ namespace MidiStyleExplorer
                                             break;
 
                                         default:
-                                            MidiSend(mevt.MidiEvent);
+                                            MidiSend(mevt);
                                             break;
                                     }
                                 }
@@ -577,11 +579,18 @@ namespace MidiStyleExplorer
                     }
                 }
 
-                // Bump time. Check for end of play. Client will take care of transport control.
+                // Bump time. Check for end of play.
                 if (barBar.IncrementCurrent(1))
                 {
-                    _running = false;
-                    Player_PlaybackCompleted(this, new EventArgs()); // TODO
+                    if (btnLoop.Checked)
+                    {
+                        Play();
+                    }
+                    else
+                    {
+                        _running = false;
+                        Rewind();
+                    }
                 }
             }
         }
@@ -655,9 +664,8 @@ namespace MidiStyleExplorer
         void DrumsOn1_CheckedChanged(object? sender, EventArgs e)
         {
             _drumChannel = chkDrumsOn1.Checked ? 1 : MidiDefs.DEFAULT_DRUM_CHANNEL;
-
             // Update UI.
-            InitChannelsGrid();
+            _channels.ForEach(ch => ch.control.IsDrums = ch.control.ChannelNumber == _drumChannel);
         }
 
         /// <summary>
@@ -678,7 +686,109 @@ namespace MidiStyleExplorer
         void Patterns_SelectedIndexChanged(object? sender, EventArgs e)
         {
             var pinfo = GetPatternInfo(lbPatterns.SelectedItem.ToString()!);
-            InitFromPattern(pinfo!);
+            GetPatternEvents(pinfo!);
+
+            Rewind();
+            if (btnAutoplay.Checked)
+            {
+                Play();
+            }
+        }
+
+        /// <summary>
+        /// The user clicked something in one of the channel controls.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void ChannelChange(object? sender, ChannelControl.ChannelChangeEventArgs e)
+        {
+            ChannelControl chc = (ChannelControl)sender!;
+
+            if (e.StateChange)
+            {
+                switch (chc.State)
+                {
+                    case PlayState.Normal:
+                        break;
+
+                    case PlayState.Solo:
+                        // Mute any other non-solo channels.
+                        for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
+                        {
+                            if (i != chc.ChannelNumber && chc.State != PlayState.Solo)
+                            {
+                                Kill(i);
+                            }
+                        }
+                        break;
+
+                    case PlayState.Mute:
+                        Kill(chc.ChannelNumber);
+                        break;
+                }
+            }
+
+            if (e.PatchChange && chc.Patch >= 0)
+            {
+                PatchChangeEvent evt = new(0, chc.ChannelNumber, chc.Patch);
+                MidiSend(evt);
+            }
+        }
+        #endregion
+
+        #region Process patterns and events
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pname"></param>
+        /// <returns></returns>
+        public PatternInfo? GetPatternInfo(string pname)
+        {
+            var ret = _mfile.Patterns.Where(p => p.Name == pname).First();
+            return ret;
+        }
+
+        /// <summary>
+        /// Get midi file contents for this pattern and convert into the internal format for playing.
+        /// </summary>
+        /// <param name="pinfo"></param>
+        void GetPatternEvents(PatternInfo pinfo)
+        {
+            // Quiet.
+            KillAll();
+
+            // Scale to time increments used by application.
+            MidiTime mt = new()
+            {
+                InternalPpq = Common.PPQ,
+                MidiPpq = _mfile.DeltaTicksPerQuarterNote
+            };
+
+            // Update patches.
+            foreach (var (control, events) in _channels)
+            {
+                // Patches.
+                control.Patch = pinfo.Patches[control.ChannelNumber];
+                if (control.Patch != -1)
+                {
+                    PatchChangeEvent evt = new(0, control.ChannelNumber + 1, control.Patch);
+                    MidiSend(evt);
+                }
+            }
+
+            // Process pattern events.
+            foreach (var (control, events) in _channels)
+            {
+                events.Reset();
+
+                var evts = _mfile.AllEvents.Where(e => e.Pattern == pinfo.Name && e.Channel == control.ChannelNumber).OrderBy(e => e.AbsoluteTime);
+
+                foreach (var evt in evts)
+                {
+                    int scaledTime = mt.MidiToInternal(evt.AbsoluteTime);
+                    events.Add(scaledTime, evt.MidiEvent);
+                }
+            }
         }
         #endregion
 
@@ -719,8 +829,6 @@ namespace MidiStyleExplorer
         /// <param name="e"></param>
         void Export_Click(object? sender, EventArgs e)
         {
-            /////Export();
-
             string dir = Path.GetDirectoryName(_mfile.Filename)!;
             string newfn = Path.GetFileNameWithoutExtension(_mfile.Filename);
             string pattern;
@@ -742,178 +850,89 @@ namespace MidiStyleExplorer
             using SaveFileDialog dumpDlg = new() { Title = "Export midi", FileName = newfn, InitialDirectory = dir };
             if (dumpDlg.ShowDialog() == DialogResult.OK)
             {
-                _mfile.ExportMidi(newfn, pattern, info);
+                ExportMidi(newfn, pattern, info);
             }
         }
-        #endregion
 
-
-
-        public PatternInfo? GetPatternInfo(string pname)
+        /// <summary>
+        /// Output part or all of the file to a new midi file.
+        /// </summary>
+        /// <param name="fn">Where to put the midi.</param>
+        /// <param name="pattern">Specific pattern if a style file.</param>
+        /// <param name="info">Extra info to add to midi file.</param>
+        void ExportMidi(string fn, string pattern, string info) //TODO probably find a new home with more editing features.  
         {
-            var ret = _mfile.Patterns.Where(p => p.Name == pname).First();
-            return ret;
-        }
+            // Get pattern info. This should work for the simple midi file case too.
+            PatternInfo pinfo = _mfile.Patterns.First(p => p.Name == pattern);
 
-        //////////////////////// TODO all this stuff ////////////////////////////////////////////////////////////////////////
-        //////////////////////// TODO all this stuff ////////////////////////////////////////////////////////////////////////
-        //////////////////////// TODO all this stuff ////////////////////////////////////////////////////////////////////////
-        //////////////////////// TODO all this stuff ////////////////////////////////////////////////////////////////////////
+            // Init output file contents.
+            MidiEventCollection outColl = new(1, _mfile.DeltaTicksPerQuarterNote);
+            IList<MidiEvent> outEvents = outColl.AddTrack();
+            
+            // Tempo.
+            outEvents.Add(new TempoEvent(0, 0) { Tempo = pinfo.Tempo });
 
+            // General info.
+            outEvents.Add(new TextEvent(info, MetaEventType.TextEvent, 0));
 
-
-
-        void InitFromPattern(PatternInfo pinfo)
-        {
-            // Quiet.
-            KillAll();
-
-            // Reset current controls.
-            foreach(var ch in _channels)
+            // Optional.
+            if (pinfo.TimeSig != "")
             {
-                ch.control.Patch = -1;
-                ch.events.Reset();
+                //mevents.Add(new TimeSignatureEvent(0, 4, 2, (int)ticksPerClick, 8));
+            }
+            if (pinfo.KeySig != "")
+            {
+                //mevents.Add(new KeySignatureEvent(0, 0, 0));
             }
 
-
-            // Downshift to time increments used by this application.
-            MidiTime mt = new()
-            {
-                InternalPpq = Common.PPQ,
-                MidiPpq = _mfile.DeltaTicksPerQuarterNote,
-                Tempo = 0
-            };
-
-            // Fill with new events.
-            var channels = _mfile.GetChannels(pinfo.Name);
-
-            foreach(var ch in channels)
-            {
-                ch.control.Patch = -1;
-
-
-
-                var evts = _mfile.GetEvents(pinfo.Name, chn);
-
-
-            }
-
-
-
-            long scaledTime = mt.MidiToInternal(evt.AbsoluteTime);
-            _allEvents.Add(new Event(Patterns.Last().Name, evt.Channel, scaledTime, evt));
-
-
-
-
-            InitChannelsGrid();
-
-            // Might need to update the patches.
-            for (int i = 0; i < pinfo.Patches.Length; i++)
+            // Patches.
+            for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
             {
                 if (pinfo.Patches[i] != -1)
                 {
-                    PatchChangeEvent evt = new(0, i + 1, pinfo.Patches[i]);
-                    MidiSend(evt);
+                    outEvents.Add(new PatchChangeEvent(0, i + 1, pinfo.Patches[i]));
                 }
             }
 
-            Rewind();
-
-            if (btnAutoplay.Checked)
+            // Combine the midi events for current pattern ordered by timestamp.
+            List<MidiEvent> allEvts = new();
+            foreach (var (control, events) in _channels)
             {
-                Play();
-            }
-        }
-
-
-        /// <summary>
-        /// Populate the click grid.
-        /// </summary>
-        void InitChannelsGrid()
-        {
-            cgChannels.Clear();
-
-            for (int i = 0; i < _channelControls.Count; i++)
-            {
-                var pc = _channelControls[i];
-
-                // Make a name for UI.
-                pc.Name = $"Ch:({i + 1}) ";
-
-                if (i + 1 == _drumChannel)
+                events.MidiEvents.ForEach(kv =>
                 {
-                    pc.Name += $"Drums";
-                }
-                else if (pc.Patch == -1)
-                {
-                    pc.Name += $"NoPatch";
-                }
-                else
-                {
-                    pc.Name += MidiDefs.GetInstrumentDef(pc.Patch);
-                }
-
-                // Maybe add to UI.
-                if (pc.Valid && pc.HasNotes)
-                {
-                    cgChannels.AddIndicator(pc.Name, i);
-                }
-            }
-
-            cgChannels.Show(2, cgChannels.Width / 2, 20);
-        }
-
-
-
-
-
-
-        //TODO hook to controls.
-        void ChannelChange(object? sender, ChannelControl.ChannelChangeEventArgs e)
-        {
-            if(sender is not null)
-            {
-                int channel = e.Id;
-                ChannelControl pch = (ChannelControl)sender;
-
-                if (e.StateChange)
-                {
-                    switch (pch.State)
+                    kv.Value.ForEach(e =>
                     {
-                        case PlayState.Normal:
-                            pch.State = PlayState.Solo;
-                            // Mute any other non-solo channels.
-                            for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
-                            {
-                                if (i != channel && _channelControls[i].Valid && _channelControls[i].State != PlayState.Solo)
-                                {
-                                    Kill(i);
-                                }
-                            }
-                            break;
+                        e.AbsoluteTime = kv.Key;
+                        e.Channel = control.ChannelNumber;
+                        allEvts.Add(e);
+                    });
+                });
 
-                        case PlayState.Solo:
-                            pch.State = PlayState.Mute;
-                            Kill(channel);
-                            break;
-
-                        case PlayState.Mute:
-                            pch.State = PlayState.Normal;
-                            break;
+                foreach (var channelEventTime in events.MidiEvents)
+                {
+                    var theEvents = channelEventTime.Value;
+                    foreach (var outEvent in theEvents)
+                    {
+                        outEvent.AbsoluteTime = channelEventTime.Key;
+                        outEvent.Channel = control.ChannelNumber;
+                        allEvts.Add(outEvent);
                     }
                 }
-
-                if (e.PatchChange)
-                {
-                    PatchChangeEvent evt = new(0, pch.ChannelNumber, pch.Patch);
-                    MidiSend(evt);
-
-                    //// Update UI.
-                    //_channelControls[pch - 1].Patch = cmbPatchList.SelectedIndex;
-                    //InitChannelsGrid();
-                }
             }
+
+            // Copy to output.
+            allEvts.OrderBy(e => e.AbsoluteTime).ForEach(e =>
+            {
+                outEvents.Add(e);
+            });
+
+            // End track.
+            long ltime = allEvts.Last().AbsoluteTime;
+            var endt = new MetaEvent(MetaEventType.EndTrack, 0, ltime);
+            outEvents.Add(endt);
+
+            NAudio.Midi.MidiFile.Export(fn, outColl);
         }
+        #endregion
     }
 }

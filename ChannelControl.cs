@@ -29,7 +29,7 @@ namespace MidiStyleExplorer
         public int ChannelNumber
         {
             get { return _channelNumber; }
-            set { _channelNumber = value; lblNumber.Text = _channelNumber.ToString(); }
+            set { _channelNumber = value; lblNumber.Text = $"Ch:{_channelNumber}"; }
         }
         int _channelNumber = -1;
 
@@ -44,9 +44,10 @@ namespace MidiStyleExplorer
         /// <summary>Current patch.</summary>
         public int Patch
         {
-            get { return cmbPatch.SelectedIndex; }
-            set { cmbPatch.SelectedIndex = Math.Min(value, MidiDefs.MAX_MIDI); }
+            get { return _patch; }
+            set { _patch = Math.Min(value, MidiDefs.MAX_MIDI); lblPatch.Text = FormatPatch(); }
         }
+        int _patch = -1;
 
         /// <summary>Current volume.</summary>
         public double Volume
@@ -54,6 +55,9 @@ namespace MidiStyleExplorer
             get { return sldVolume.Value; }
             set { sldVolume.Value = Math.Min(value, 1.0); }
         }
+
+        /// <summary>This is the drum channel.</summary>
+        public bool IsDrums { get; set; } = false;
         #endregion
 
         /// <summary>
@@ -72,20 +76,10 @@ namespace MidiStyleExplorer
         void ChannelControl_Load(object? sender, EventArgs e)
         {
             sldVolume.DrawColor = Common.Settings.ControlColor;
-            chkSolo.BackColor = Common.Settings.ControlColor;
-            chkMute.BackColor = Common.Settings.ControlColor;
+            lblSolo.Click += SoloMute_Click;
+            lblMute.Click += SoloMute_Click;
 
-            chkSolo.CheckedChanged += Check_Click;
-            chkMute.CheckedChanged += Check_Click;
-            cmbPatch.SelectedIndexChanged += Patch_SelectedIndexChanged;
             SetModeUi();
-
-            // Fill patch list.
-            for (int i = 0; i <= MidiDefs.MAX_MIDI; i++)
-            {
-                cmbPatch.Items.Add(MidiDefs.GetInstrumentDef(i));
-            }
-            cmbPatch.SelectedIndex = 0;
         }
 
         /// <summary>
@@ -96,16 +90,16 @@ namespace MidiStyleExplorer
             switch (_state)
             {
                 case PlayState.Normal:
-                    chkSolo.Checked = false;
-                    chkMute.Checked = false;
+                    lblSolo.BackColor = SystemColors.Control;
+                    lblMute.BackColor = SystemColors.Control;
                     break;
                 case PlayState.Solo:
-                    chkSolo.Checked = true;
-                    chkMute.Checked = false;
+                    lblSolo.BackColor = Common.Settings.ControlColor;
+                    lblMute.BackColor = SystemColors.Control;
                     break;
                 case PlayState.Mute:
-                    chkSolo.Checked = false;
-                    chkMute.Checked = true;
+                    lblSolo.BackColor = SystemColors.Control;
+                    lblMute.BackColor = Common.Settings.ControlColor;
                     break;
             }
         }
@@ -113,38 +107,112 @@ namespace MidiStyleExplorer
         /// <summary>
         /// Handles solo and mute.
         /// </summary>
-        void Check_Click(object? sender, EventArgs e)
+        void SoloMute_Click(object? sender, EventArgs e)
         {
             if (sender is not null)
             {
-                var chk = sender as CheckBox;
+                var lbl = sender as Label;
 
-                // Fix UI logic.
-                if (chk == chkSolo)
+                // Figure out state.
+                _state = PlayState.Normal; // default
+
+                // Toggle control. Get current.
+                bool soloSel = lblSolo.BackColor == Common.Settings.ControlColor;
+                bool muteSel = lblMute.BackColor == Common.Settings.ControlColor;
+
+                if (lbl == lblSolo)
                 {
-                    chkMute.Checked = false;
+                    if(soloSel) // unselect
+                    {
+                        if(muteSel)
+                        {
+                            _state = PlayState.Mute;
+                        }
+                    }
+                    else // select
+                    {
+                        _state = PlayState.Solo;
+                    }
                 }
-                else // chkMute
+                else // lblMute
                 {
-                    chkSolo.Checked = false;
+                    if (muteSel) // unselect
+                    {
+                        if (soloSel)
+                        {
+                            _state = PlayState.Solo;
+                        }
+                    }
+                    else // select
+                    {
+                        _state = PlayState.Mute;
+                    }
                 }
 
-                _state = PlayState.Normal;
-                if (chkSolo.Checked) { _state = PlayState.Solo; }
-                else if (chkMute.Checked) { _state = PlayState.Mute; }
-
+                SetModeUi();
                 ChannelChange?.Invoke(this, new ChannelChangeEventArgs() { StateChange = true });
             }
         }
 
         /// <summary>
-        /// 
+        /// User wants to change the patch.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void Patch_SelectedIndexChanged(object? sender, EventArgs e)
+        void Patch_Click(object sender, EventArgs e)
         {
-            ChannelChange?.Invoke(this, new ChannelChangeEventArgs() { PatchChange = true });
+            using Form f = new()
+            {
+                Text = "Select Patch",
+                Size = new Size(300, 350),
+                StartPosition = FormStartPosition.Manual,
+                Location = new Point(200, 200),
+                FormBorderStyle = FormBorderStyle.FixedToolWindow,
+                ShowIcon = false,
+                ShowInTaskbar = false
+            };
+            ListView lv = new()
+            {
+                Dock = DockStyle.Fill,
+                View = View.List,
+                HideSelection = false
+            };
+
+            lv.Items.Add("NoPatch");
+            for (int i = 0; i < MidiDefs.MAX_MIDI; i++)
+            {
+                lv.Items.Add(MidiDefs.GetInstrumentDef(i));
+            }
+
+            lv.Click += (object? sender, EventArgs e) =>
+            {
+                int ind = lv.SelectedIndices[0];
+                Patch = ind - 1;
+                ChannelChange?.Invoke(this, new() { PatchChange = true });
+                f.Close();
+            };
+
+            f.Controls.Add(lv);
+            f.ShowDialog();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        string FormatPatch()
+        {
+            string spatch = "NoPatch"; // default
+
+            if(IsDrums)
+            {
+                spatch = "Drums";
+            }
+            else if (_patch >= 0 && _patch < MidiDefs.MAX_MIDI)
+            {
+                spatch = MidiDefs.GetInstrumentDef(_patch);
+            }
+
+            return spatch;
         }
 
         /// <summary>
@@ -153,7 +221,7 @@ namespace MidiStyleExplorer
         /// <returns></returns>
         public override string ToString()
         {
-            return $"ChannelControl: Patch:{Patch} ChannelNumber:{ChannelNumber} Mode:{State}";
+            return $"ChannelControl: ChannelNumber:{ChannelNumber} Patch:{FormatPatch()} State:{State}";
         }
     }
 }

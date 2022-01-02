@@ -19,6 +19,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="doc\**" />
+    <Compile Remove="packages\**" />
+    <Compile Remove="_files\**" />
+    <EmbeddedResource Remove="doc\**" />
+    <EmbeddedResource Remove="packages\**" />
+    <EmbeddedResource Remove="_files\**" />
+    <None Remove="doc\**" />
+    <None Remove="packages\**" />
+    <None Remove="_files\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="MidiPlayer.cs" />
     <Compile Remove="MidiPlayer.Designer.cs" />
   </ItemGroup>

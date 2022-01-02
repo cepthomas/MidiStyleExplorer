@@ -11,65 +11,16 @@ using NBagOfTricks;
 
 namespace MidiStyleExplorer
 {
-
-    /// <summary>Properties associated with a pattern.</summary>
-    public class PatternInfo
-    {
-        /// <summary>Pattern name. Empty indicates single pattern aka plain midi file.</summary>
-        public string Name { get; set; } = "";
-
-        /// <summary>Tempo, if supplied by file. Defaults to 100 if missing.</summary>
-        public double Tempo { get; set; } = 100.0;
-
-        /// <summary>Time signature, if supplied by file.</summary>
-        public string TimeSig { get; set; } = "";
-
-        /// <summary>Key signature, if supplied by file.</summary>
-        public string KeySig { get; set; } = "";
-
-        /// <summary>All the channel patches. Index is 0-based channel number.</summary>
-        public int[] Patches = new int[MidiDefs.NUM_CHANNELS];
-
-        /// <summary>Normal constructor.</summary>
-        public PatternInfo()
-        {
-            for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
-            {
-                Patches[i] = -1;
-            }
-        }
-
-        /// <summary>Special copy constructor.</summary>
-        public PatternInfo(PatternInfo src, string name)
-        {
-            Name = name;
-            Tempo = src.Tempo;
-            TimeSig = src.TimeSig;
-            KeySig = src.KeySig;
-
-            for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
-            {
-                Patches[i] = src.Patches[i];
-            }
-        }
-    }
-
-
-
-
     /// <summary>
-    /// Reads in and processes standard midi or yahama style files. Timestamps are from original file.
-    /// Note: NAudio midi event channel numbers are 1-based.
+    /// Reads in and processes standard midi or yamaha style files. Timestamps are from original file.
     /// FUTURE Doesn't support multiple tracks. Would it be useful?
     /// </summary>
     public class MidiFile
     {
-        /// <summary>
-        /// Descriptor for one event.
-        /// </summary>
-        public record Event(string Pattern, int Channel, long AbsoluteTime, MidiEvent MidiEvent);
+        /// <summary>Queryable descriptor for a midi event.</summary>
+        public record EventDesc(string Pattern, int Channel, long AbsoluteTime, MidiEvent MidiEvent);
 
-        #region Properties - file top level
+        #region Properties - file specific
         /// <summary>From where.</summary>
         public string Filename { get; private set; } = "";
 
@@ -83,9 +34,12 @@ namespace MidiStyleExplorer
         public int DeltaTicksPerQuarterNote { get; private set; } = 0;
         #endregion
 
-        #region Properties - patterns
-        /// <summary>All file contents. Plain midi files will have only one.</summary>
+        #region Properties - patterns and events
+        /// <summary>All file pattern sections. Plain midi files will have only one/unnamed.</summary>
         public List<PatternInfo> Patterns { get; private set; } = new();
+
+        /// <summary>All the midi events. This is the verbatim content of the file with no time scaling.</summary>
+        public List<EventDesc> AllEvents { get; private set; } = new();
         #endregion
 
         #region Properties set by client
@@ -97,57 +51,19 @@ namespace MidiStyleExplorer
         #endregion
 
         #region Fields
-        /// <summary>All the midi events. This is the verbatim content of the file with no time scaling.</summary>
-        List<Event> _allEvents = new();
-
         /// <summary>Save this for logging/debugging.</summary>
         long _lastStreamPos = 0;
         #endregion
-
-        //TODO these:::
-
-        /// <summary>
-        /// Helper to get channels.
-        /// </summary>
-        /// <param name="pname">Specific pattern name.</param>
-        /// <returns>List of channels in this pattern.</returns>
-        public IEnumerable<int> GetChannels(string pname)
-        {
-            IEnumerable<int> channels = _allEvents.Where(e => e.Pattern == pname).Select(e => e.Channel).Distinct().OrderBy(e => e);
-            return channels;
-        }
-        public IEnumerable<int> GetChannels()
-        {
-            IEnumerable<int> channels = _allEvents.Select(e => e.Channel).Distinct().OrderBy(e => e);
-            return channels;
-        }
-
-        /// <summary>
-        /// Helper to get an event collection.
-        /// </summary>
-        /// <param name="papnamettern">Specific pattern name.</param>
-        /// <param name="channel">Specific channel.</param>
-        /// <returns>The collection or null if invalid.</returns>
-        public IEnumerable<Event> GetEvents(string pname, int channel)
-        {
-            IEnumerable<Event> ret = _allEvents.Where(e => e.Pattern == pname && e.Channel == channel);
-            return ret;
-        }
-        public IEnumerable<Event> GetEvents(string pname)
-        {
-            IEnumerable<Event> ret = _allEvents.Where(e => e.Pattern == pname);
-            return ret;
-        }
 
         #region Public methods
         /// <summary>
         /// Read a file.
         /// </summary>
         /// <param name="fn"></param>
-        public void ProcessFile(string fn)
+        public void Read(string fn)
         {
             // Init everything.
-            _allEvents.Clear();
+            AllEvents.Clear();
             Patterns.Clear();
             Patterns.Add(new()); // always at least one
             Filename = fn;
@@ -216,7 +132,7 @@ namespace MidiStyleExplorer
         /// <param name="br"></param>
         void ReadMThd(BinaryReader br)
         {
-            uint chunkSize = Read(br, 4);
+            uint chunkSize = ReadStream(br, 4);
 
             if (chunkSize != 6)
             {
@@ -224,21 +140,21 @@ namespace MidiStyleExplorer
             }
 
             // Midi file type.
-            MidiFileType = (int)Read(br, 2);
+            MidiFileType = (int)ReadStream(br, 2);
             //if (MidiFileType != 0)
             //{
             //    throw new FormatException($"This is type {MidiFileType} - must be 0");
             //}
 
             // Number of tracks.
-            Tracks = (int)Read(br, 2);
+            Tracks = (int)ReadStream(br, 2);
             // if (Tracks != 1)
             // {
             //     throw new FormatException($"This has {Tracks} tracks - must be 1");
             // }
 
             // Resolution.
-            DeltaTicksPerQuarterNote = (int)Read(br, 2);
+            DeltaTicksPerQuarterNote = (int)ReadStream(br, 2);
         }
 
         /// <summary>
@@ -248,7 +164,7 @@ namespace MidiStyleExplorer
         /// <returns></returns>
         int ReadMTrk(BinaryReader br)
         {
-            uint chunkSize = Read(br, 4);
+            uint chunkSize = ReadStream(br, 4);
             long startPos = br.BaseStream.Position;
             int absoluteTime = 0;
 
@@ -375,7 +291,7 @@ namespace MidiStyleExplorer
             ///// Local function. /////
             void AddMidiEvent(MidiEvent evt)
             {
-                _allEvents.Add(new Event(Patterns.Last().Name, evt.Channel, evt.AbsoluteTime, evt));
+                AllEvents.Add(new EventDesc(Patterns.Last().Name, evt.Channel, evt.AbsoluteTime, evt));
             }
 
             return absoluteTime;
@@ -387,7 +303,7 @@ namespace MidiStyleExplorer
         /// <param name="br"></param>
         void ReadCASM(BinaryReader br)
         {
-            uint chunkSize = Read(br, 4);
+            uint chunkSize = ReadStream(br, 4);
         }
 
         /// <summary>
@@ -396,7 +312,7 @@ namespace MidiStyleExplorer
         /// <param name="br"></param>
         void ReadCSEG(BinaryReader br)
         {
-            uint chunkSize = Read(br, 4);
+            uint chunkSize = ReadStream(br, 4);
         }
 
         /// <summary>
@@ -405,7 +321,7 @@ namespace MidiStyleExplorer
         /// <param name="br"></param>
         void ReadSdec(BinaryReader br)
         {
-            uint chunkSize = Read(br, 4);
+            uint chunkSize = ReadStream(br, 4);
             br.ReadBytes((int)chunkSize);
         }
 
@@ -416,7 +332,7 @@ namespace MidiStyleExplorer
         void ReadCtab(BinaryReader br)
         {
             // Has some key and chord info.
-            uint chunkSize = Read(br, 4);
+            uint chunkSize = ReadStream(br, 4);
             br.ReadBytes((int)chunkSize);
         }
 
@@ -426,7 +342,7 @@ namespace MidiStyleExplorer
         /// <param name="br"></param>
         void ReadCntt(BinaryReader br)
         {
-            uint chunkSize = Read(br, 4);
+            uint chunkSize = ReadStream(br, 4);
             br.ReadBytes((int)chunkSize);
         }
 
@@ -436,7 +352,7 @@ namespace MidiStyleExplorer
         /// <param name="br"></param>
         void ReadOTSc(BinaryReader br)
         {
-            uint chunkSize = Read(br, 4);
+            uint chunkSize = ReadStream(br, 4);
             br.ReadBytes((int)chunkSize);
         }
 
@@ -446,7 +362,7 @@ namespace MidiStyleExplorer
         /// <param name="br"></param>
         void ReadFNRc(BinaryReader br)
         {
-            uint chunkSize = Read(br, 4);
+            uint chunkSize = ReadStream(br, 4);
             br.ReadBytes((int)chunkSize);
         }
         #endregion
@@ -462,7 +378,7 @@ namespace MidiStyleExplorer
             List<string> contents = new();
             contents.Add($"Timestamp,Type,Pattern,Channel,FilePos,Content");
 
-            _allEvents.OrderBy(v => v.AbsoluteTime).
+            AllEvents.OrderBy(v => v.AbsoluteTime).
                 ForEach(evt => contents.Add($"{evt.AbsoluteTime},{evt.GetType()},{evt.Pattern},{evt.Channel},{_lastStreamPos},{evt}"));
 
             return contents;
@@ -498,7 +414,7 @@ namespace MidiStyleExplorer
                 "Time,Event,Channel,Pattern,Val1,Val2,Val3",
             };
 
-            foreach (var me in _allEvents)
+            foreach (var me in AllEvents)
             {
                 // Boilerplate.
                 string ntype = me.MidiEvent.GetType().ToString().Replace("NAudio.Midi.", "");
@@ -565,80 +481,16 @@ namespace MidiStyleExplorer
 
             return ret;
         }
-
-        /// <summary>
-        /// Output part or all of the file to a new midi file.
-        /// </summary>
-        /// <param name="fn">Where to put the midi.</param>
-        /// <param name="pattern">Specific pattern if a style file.</param>
-        /// <param name="info">Extra info to add to midi file.</param>
-        public void ExportMidi(string fn, string pattern, string info)
-        {
-            // Get pattern info. This should work for the simple midi file case too.
-            PatternInfo pinfo = Patterns.First(p => p.Name == pattern);
-
-            MidiEventCollection mecoll = new(1, DeltaTicksPerQuarterNote);
-            IList<MidiEvent> mevents = mecoll.AddTrack();
-
-            // Tempo.
-            mevents.Add(new TempoEvent(0, 0) { Tempo = pinfo.Tempo });
-
-            // General info.
-            mevents.Add(new TextEvent(info, MetaEventType.TextEvent, 0));
-
-            // Optional.
-            if (pinfo.TimeSig != "")
-            {
-                //mevents.Add(new TimeSignatureEvent(0, 4, 2, (int)ticksPerClick, 8));
-            }
-            if (pinfo.KeySig != "")
-            {
-                //mevents.Add(new KeySignatureEvent(0, 0, 0));
-            }
-
-            // Patches.
-            for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
-            {
-                if(pinfo.Patches[i] != -1)
-                {
-                    mevents.Add(new PatchChangeEvent(0, i + 1, pinfo.Patches[i]));
-                }
-            }
-            // Collect the midi events for this pattern ordered by timestamp.
-            IEnumerable<Event> evts = _allEvents.Where(e => e.Pattern == pattern).OrderBy(e => e.AbsoluteTime);
-            long ltime = evts.Last().AbsoluteTime;
-
-            // Copy to output.
-            evts.ForEach(e => mevents.Add(e.MidiEvent));
-
-            // End track.
-            var endt = new MetaEvent(MetaEventType.EndTrack, 0, ltime);
-            mevents.Add(endt);
-
-            NAudio.Midi.MidiFile.Export(fn, mecoll);
-        }
         #endregion
 
         #region Helpers
-        /// <summary>
-        /// Save an event for internal processing.
-        /// </summary>
-        /// <param name="timestamp"></param>
-        /// <param name="etype"></param>
-        /// <param name="channel"></param>
-        /// <param name="content"></param>
-        void Capture(long timestamp, string etype, int channel, string content)
-        {
-            //ReadableContents.Add($"{timestamp},{etype},{_currentPattern},{channel},{_lastStreamPos},{content.Replace(',', '_')}");
-        }
-
         /// <summary>
         /// Read a number from stream and adjust endianess.
         /// </summary>
         /// <param name="br"></param>
         /// <param name="size"></param>
         /// <returns></returns>
-        uint Read(BinaryReader br, int size)
+        uint ReadStream(BinaryReader br, int size)
         {
             uint i;
 
@@ -668,6 +520,11 @@ namespace MidiStyleExplorer
 
             return i;
         }
+
+        //void Capture(long timestamp, string etype, int channel, string content)
+        //{
+        //    ReadableContents.Add($"{timestamp},{etype},{_currentPattern},{channel},{_lastStreamPos},{content.Replace(',', '_')}");
+        //}
         #endregion
     }
 }

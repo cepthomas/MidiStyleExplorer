@@ -10,6 +10,9 @@ To that end, and because the windows multimedia timer has inadequate accuracy fo
 - Some midi files with single instruments are sloppy with channel numbers so there are a couple of options for simple remapping.
 - In the log view: C for clear, W for word wrap toggle.
 
+# Notes
+- Since midi files and NAudio use 1-based channel numbers, so does this application with the exception
+  where it is used as an array index.
 
 # Third Party
 This application uses these FOSS components:
