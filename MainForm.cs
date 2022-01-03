@@ -71,10 +71,8 @@ namespace MidiStyleExplorer
 
             // The text output.
             txtViewer.WordWrap = true;
-            txtViewer.BackColor = Color.Cornsilk;
             txtViewer.Colors.Add("ERR", Color.LightPink);
             txtViewer.Colors.Add("WRN:", Color.Plum);
-            txtViewer.Font = new Font("Lucida Console", 9);
 
             // Other UI configs.
             chkDrumsOn1.FlatAppearance.CheckedBackColor = Common.Settings.ControlColor;
@@ -313,7 +311,7 @@ namespace MidiStyleExplorer
                 var channels = _mfile.AllEvents.Select(e => e.Channel).Distinct().OrderBy(e => e);
 
                 // Make new controls and data holders.
-                int x = barBar.Left;
+                int x = lbPatterns.Right + 5;
                 int y = lbPatterns.Top;
                 foreach(var ch in channels)
                 {
@@ -330,6 +328,7 @@ namespace MidiStyleExplorer
 
                     if(_channels.Count % 8 == 0)
                     {
+                        // new columnn
                         x = ctrl.Right + 5;
                         y = lbPatterns.Top;
                     }
@@ -528,52 +527,50 @@ namespace MidiStyleExplorer
                 // Process each channel.
                 foreach (var (control, events) in _channels)
                 {
-                    if (events.Valid)
+                    // Look for events to send.
+                    if (control.State == PlayState.Solo || (!solo && control.State == PlayState.Normal))
                     {
-                        // Look for events to send.
-                        if (control.State == PlayState.Solo || (!solo && control.State == PlayState.Normal))
+                        // Process any sequence steps.
+                        if (events.MidiEvents.ContainsKey(barBar.Current.TotalSubdivs))
                         {
-                            // Process any sequence steps.
-                            if (events.MidiEvents.ContainsKey(barBar.Current.TotalSubdivs))
+                            foreach (var mevt in events.MidiEvents[barBar.Current.TotalSubdivs])
                             {
-                                foreach (var mevt in events.MidiEvents[barBar.Current.TotalSubdivs])
+                                switch (mevt)
                                 {
-                                    switch (mevt)
-                                    {
-                                        case NoteOnEvent evt:
-                                            if (control.ChannelNumber == _drumChannel && evt.Velocity == 0)
-                                            {
-                                                // Skip drum noteoffs as windows GM doesn't like them.
-                                            }
-                                            else
-                                            {
-                                                // Adjust volume and maybe drum channel. Also NAudio NoteLength bug.
-                                                NoteOnEvent ne = new(
-                                                    evt.AbsoluteTime,
-                                                    control.ChannelNumber == _drumChannel ? MidiDefs.DEFAULT_DRUM_CHANNEL : evt.Channel,
-                                                    evt.NoteNumber,
-                                                    (int)(evt.Velocity * sldVolume.Value),
-                                                    evt.OffEvent is null ? 0 : evt.NoteLength);
+                                    case NoteOnEvent evt:
+                                        if (control.ChannelNumber == _drumChannel && evt.Velocity == 0)
+                                        {
+                                            // Skip drum noteoffs as windows GM doesn't like them.
+                                        }
+                                        else
+                                        {
+                                            // Adjust volume and maybe drum channel.
+                                            NoteOnEvent ne = new(
+                                                evt.AbsoluteTime,
+                                                control.ChannelNumber == _drumChannel ? MidiDefs.DEFAULT_DRUM_CHANNEL : evt.Channel,
+                                                evt.NoteNumber,
+                                                (int)(evt.Velocity * sldVolume.Value * control.Volume),
+                                                evt.OffEvent is null ? 0 : evt.NoteLength); // Fix NAudio NoteLength bug.
 
-                                                MidiSend(ne);
-                                            }
-                                            break;
+                                            MidiSend(ne);
+                                        }
+                                        break;
 
-                                        case NoteEvent evt:
-                                            if (control.ChannelNumber == _drumChannel)
-                                            {
-                                                // Skip drum noteoffs as windows GM doesn't like them.
-                                            }
-                                            else
-                                            {
-                                                MidiSend(evt);
-                                            }
-                                            break;
+                                    case NoteEvent evt:
+                                        if (control.ChannelNumber == _drumChannel)
+                                        {
+                                            // Skip drum noteoffs as windows GM doesn't like them.
+                                        }
+                                        else
+                                        {
+                                            MidiSend(evt);
+                                        }
+                                        break;
 
-                                        default:
-                                            MidiSend(mevt);
-                                            break;
-                                    }
+                                    default:
+                                        // Everything else as is.
+                                        MidiSend(mevt);
+                                        break;
                                 }
                             }
                         }
@@ -798,8 +795,8 @@ namespace MidiStyleExplorer
         void Dump_Click(object? sender, EventArgs e)
         {
             //_mfile.DrumChannel = _drumChannel;
-            //return _mfile.GetReadableGrouped();
-            var ds = _mfile.GetReadableContents();
+            //var ds = _mfile.DumpSequentialEvents();
+            var ds = _mfile.DumpGroupedEvents();
 
             if (ds.Count == 0)
             {

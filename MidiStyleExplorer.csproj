@@ -31,15 +31,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="MidiPlayer.cs" />
-    <Compile Remove="MidiPlayer.Designer.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Remove="MidiPlayer.resx" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -69,6 +60,12 @@
     <Reference Include="NBagOfUis">
       <HintPath>lib\NBagOfUis.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

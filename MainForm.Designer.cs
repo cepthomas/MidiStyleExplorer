@@ -112,7 +112,8 @@
             this.txtViewer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtViewer.Font = new System.Drawing.Font("Consolas", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.txtViewer.BackColor = System.Drawing.Color.Snow;
+            this.txtViewer.Font = new System.Drawing.Font("Lucida Console", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.txtViewer.Location = new System.Drawing.Point(20, 483);
             this.txtViewer.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtViewer.MaxText = 5000;
@@ -127,16 +128,16 @@
             this.sldVolume.DecPlaces = 1;
             this.sldVolume.DrawColor = System.Drawing.Color.Fuchsia;
             this.sldVolume.Label = "vol";
-            this.sldVolume.Location = new System.Drawing.Point(134, 43);
+            this.sldVolume.Location = new System.Drawing.Point(20, 113);
             this.sldVolume.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.sldVolume.Maximum = 1D;
+            this.sldVolume.Maximum = 2D;
             this.sldVolume.Minimum = 0D;
             this.sldVolume.Name = "sldVolume";
             this.sldVolume.Orientation = System.Windows.Forms.Orientation.Horizontal;
             this.sldVolume.ResetValue = 0D;
-            this.sldVolume.Size = new System.Drawing.Size(131, 50);
+            this.sldVolume.Size = new System.Drawing.Size(98, 50);
             this.sldVolume.TabIndex = 42;
-            this.sldVolume.Value = 0.5D;
+            this.sldVolume.Value = 1D;
             // 
             // btnRewind
             // 
@@ -170,12 +171,12 @@
             this.barBar.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.barBar.FontLarge = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.barBar.FontSmall = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.barBar.Location = new System.Drawing.Point(277, 43);
+            this.barBar.Location = new System.Drawing.Point(134, 42);
             this.barBar.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.barBar.MarkerColor = System.Drawing.Color.Black;
             this.barBar.Name = "barBar";
             this.barBar.ProgressColor = System.Drawing.Color.NavajoWhite;
-            this.barBar.Size = new System.Drawing.Size(699, 50);
+            this.barBar.Size = new System.Drawing.Size(842, 50);
             this.barBar.Snap = NBagOfUis.BarBar.SnapType.Bar;
             this.barBar.SubdivsPerBeat = 8;
             this.barBar.TabIndex = 82;
@@ -187,7 +188,7 @@
             this.sldTempo.DecPlaces = 0;
             this.sldTempo.DrawColor = System.Drawing.Color.White;
             this.sldTempo.Label = "BPM";
-            this.sldTempo.Location = new System.Drawing.Point(20, 113);
+            this.sldTempo.Location = new System.Drawing.Point(20, 180);
             this.sldTempo.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.sldTempo.Maximum = 200D;
             this.sldTempo.Minimum = 50D;
@@ -203,7 +204,7 @@
             // btnKill
             // 
             this.btnKill.Image = global::MidiStyleExplorer.Properties.Resources.glyphicons_242_flash;
-            this.btnKill.Location = new System.Drawing.Point(62, 232);
+            this.btnKill.Location = new System.Drawing.Point(62, 299);
             this.btnKill.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnKill.Name = "btnKill";
             this.btnKill.Size = new System.Drawing.Size(32, 40);
@@ -230,7 +231,7 @@
             // 
             this.chkDrumsOn1.Appearance = System.Windows.Forms.Appearance.Button;
             this.chkDrumsOn1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.chkDrumsOn1.Location = new System.Drawing.Point(20, 179);
+            this.chkDrumsOn1.Location = new System.Drawing.Point(20, 246);
             this.chkDrumsOn1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.chkDrumsOn1.Name = "chkDrumsOn1";
             this.chkDrumsOn1.Size = new System.Drawing.Size(98, 34);
@@ -245,7 +246,7 @@
             this.chkLogMidi.Appearance = System.Windows.Forms.Appearance.Button;
             this.chkLogMidi.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.chkLogMidi.Image = global::MidiStyleExplorer.Properties.Resources.glyphicons_170_record;
-            this.chkLogMidi.Location = new System.Drawing.Point(20, 232);
+            this.chkLogMidi.Location = new System.Drawing.Point(20, 299);
             this.chkLogMidi.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.chkLogMidi.Name = "chkLogMidi";
             this.chkLogMidi.Size = new System.Drawing.Size(32, 40);

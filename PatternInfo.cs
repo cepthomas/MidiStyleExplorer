@@ -18,7 +18,7 @@ namespace MidiStyleExplorer
         public string Name { get; set; } = "";
 
         /// <summary>Tempo, if supplied by file. Defaults to 100 if missing.</summary>
-        public double Tempo { get; set; } = 100.0;
+        public int Tempo { get; set; } = 100;
 
         /// <summary>Time signature, if supplied by file.</summary>
         public string TimeSig { get; set; } = "";
@@ -38,7 +38,7 @@ namespace MidiStyleExplorer
             }
         }
 
-        /// <summary>Special copy constructor.</summary>
+        /// <summary>Copy constructor for defaults in case the new pattern doesn't change any.</summary>
         public PatternInfo(PatternInfo src, string name)
         {
             Name = name;
@@ -50,6 +50,37 @@ namespace MidiStyleExplorer
             {
                 Patches[i] = src.Patches[i];
             }
+        }
+
+        /// <summary>
+        /// Readable version.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            List<string> content = new();
+            content.Add($"Name:{(Name == "" ? "None" : Name)}");
+            content.Add($"Tempo:{Tempo}");
+
+            if (TimeSig != "")
+            {
+                content.Add($"TimeSig:{TimeSig}");
+            }
+
+            if (KeySig != "")
+            {
+                content.Add($"KeySig:{KeySig}");
+            }
+
+            for(int i = 0; i <MidiDefs.NUM_CHANNELS; i++)
+            {
+                if(Patches[i] != -1)
+                {
+                    content.Add($"Ch:{i + 1} Patch:{MidiDefs.GetInstrumentDef(Patches[i])}");
+                }
+            }
+
+            return string.Join(' ', content);
         }
     }
 }

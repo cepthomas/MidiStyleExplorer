@@ -53,14 +53,14 @@ namespace MidiStyleExplorer
             this.sldVolume.Label = "vol";
             this.sldVolume.Location = new System.Drawing.Point(195, 2);
             this.sldVolume.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.sldVolume.Maximum = 1D;
+            this.sldVolume.Maximum = 2D;
             this.sldVolume.Minimum = 0D;
             this.sldVolume.Name = "sldVolume";
             this.sldVolume.Orientation = System.Windows.Forms.Orientation.Horizontal;
             this.sldVolume.ResetValue = 0D;
             this.sldVolume.Size = new System.Drawing.Size(80, 30);
             this.sldVolume.TabIndex = 43;
-            this.sldVolume.Value = 0.8D;
+            this.sldVolume.Value = 1D;
             // 
             // lblPatch
             // 

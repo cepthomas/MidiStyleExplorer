@@ -78,8 +78,6 @@ namespace MidiStyleExplorer
             {
                 var sectionName = Encoding.UTF8.GetString(br.ReadBytes(4));
 
-                //Capture(-1, "Section", -1, sectionName);
-
                 switch (sectionName)
                 {
                     case "MThd":
@@ -119,7 +117,6 @@ namespace MidiStyleExplorer
                         break;
 
                     default:
-                        //Capture(-1, "Done", -1, "!!!");
                         done = true;
                         break;
                 }
@@ -192,19 +189,16 @@ namespace MidiStyleExplorer
                     ///// Standard midi events /////
                     case NoteOnEvent evt:
                         AddMidiEvent(evt);
-                        //Capture(evt.AbsoluteTime, "NoteOn", evt.Channel, evt.ToString());
                         break;
 
                     case NoteEvent evt:
                         AddMidiEvent(evt);
-                        //Capture(evt.AbsoluteTime, "NoteOff", evt.Channel, evt.ToString());
                         break;
 
                     case ControlChangeEvent evt:
                         if (!IgnoreNoisy)
                         {
                             AddMidiEvent(evt);
-                            //Capture(evt.AbsoluteTime, "ControlChange", evt.Channel, evt.ToString());
                         }
                         break;
 
@@ -216,52 +210,43 @@ namespace MidiStyleExplorer
                         break;
 
                     case PatchChangeEvent evt:
-                        Patterns.Last().Patches[evt.Channel] = evt.Patch;
+                        Patterns.Last().Patches[evt.Channel - 1] = evt.Patch;
                         AddMidiEvent(evt);
-                        //Capture(evt.AbsoluteTime, "PatchChangeEvent", evt.Channel, evt.ToString());
                         break;
 
                     case SysexEvent evt:
                         if (!IgnoreNoisy)
                         {
                             AddMidiEvent(evt);
-                            //string s = evt.ToString().Replace(Environment.NewLine, " ");
-                            //Capture(evt.AbsoluteTime, "Sysex", evt.Channel, s);
                         }
                         break;
 
                     ///// Meta events /////
                     case TrackSequenceNumberEvent evt:
                         AddMidiEvent(evt);
-                        //Capture(evt.AbsoluteTime, "TrackSequenceNumber", evt.Channel, evt.ToString());
                         break;
 
                     case TempoEvent evt:
-                        Patterns.Last().Tempo = evt.Tempo;
+                        Patterns.Last().Tempo = (int)Math.Round(evt.Tempo);
                         AddMidiEvent(evt);
-                        //Capture(evt.AbsoluteTime, "SetTempo", evt.Channel, evt.Tempo.ToString());
                         break;
 
                     case TimeSignatureEvent evt:
                         Patterns.Last().TimeSig = evt.TimeSignature;
                         AddMidiEvent(evt);
-                        //Capture(evt.AbsoluteTime, "TimeSignature", evt.Channel, evt.TimeSignature);
                         break;
 
                     case KeySignatureEvent evt:
                         Patterns.Last().KeySig = evt.ToString();
                         AddMidiEvent(evt);
-                        //Capture(evt.AbsoluteTime, "KeySignature", evt.Channel, evt.ToString());
                         break;
 
                     case TextEvent evt when evt.MetaEventType == MetaEventType.SequenceTrackName:
                         AddMidiEvent(evt);
-                        //Capture(evt.AbsoluteTime, "SequenceTrackName", evt.Channel, evt.Text);
                         break;
 
                     case TextEvent evt when evt.MetaEventType == MetaEventType.Marker:
                         // Indicates start of a new midi pattern.
-                        //Capture(evt.AbsoluteTime, "Marker", evt.Channel, evt.Text);
                         if(Patterns.Last().Name == "")
                         {
                             // It's the default/single pattern so update its name.
@@ -279,12 +264,10 @@ namespace MidiStyleExplorer
 
                     case TextEvent evt when evt.MetaEventType == MetaEventType.TextEvent:
                         AddMidiEvent(evt);
-                        //Capture(evt.AbsoluteTime, "TextEvent", evt.Channel, evt.Text);
                         break;
 
                     case MetaEvent evt when evt.MetaEventType == MetaEventType.EndTrack:
                         // Indicates end of current midi track.
-                        //Capture(evt.AbsoluteTime, "EndTrack", evt.Channel, evt.ToString());
                         AddMidiEvent(evt);
                         //_currentPattern = "";
                         break;
@@ -292,7 +275,6 @@ namespace MidiStyleExplorer
                     default:
                         // Other MidiCommandCodes: AutoSensing, ChannelAfterTouch, ContinueSequence, Eox, KeyAfterTouch, StartSequence, StopSequence, TimingClock
                         // Other MetaEventType: Copyright, CuePoint, DeviceName, Lyric, MidiChannel, MidiPort, ProgramName, SequencerSpecific, SmpteOffset, TrackInstrumentName
-                        //Capture(-1, "Other", -1, $"{me.GetType()} {me}");
                         break;
                 }
             }
@@ -313,7 +295,7 @@ namespace MidiStyleExplorer
         /// <param name="br"></param>
         void ReadCASM(BinaryReader br)
         {
-            uint chunkSize = ReadStream(br, 4);
+            /*uint chunkSize =*/ ReadStream(br, 4);
         }
 
         /// <summary>
@@ -322,7 +304,7 @@ namespace MidiStyleExplorer
         /// <param name="br"></param>
         void ReadCSEG(BinaryReader br)
         {
-            uint chunkSize = ReadStream(br, 4);
+            /*uint chunkSize =*/ ReadStream(br, 4);
         }
 
         /// <summary>
@@ -383,13 +365,13 @@ namespace MidiStyleExplorer
         /// This is as the events appear in the original file plus some other stuff for debugging.
         /// </summary>
         /// <returns></returns>
-        public List<string> GetReadableContents()
+        public List<string> DumpSequentialEvents()
         {
             List<string> contents = new();
-            contents.Add($"Timestamp,Type,Pattern,Channel,FilePos,Content");
+            contents.Add($"AbsoluteTime,Type,Pattern,Channel,FilePos,Content");
 
             AllEvents.OrderBy(v => v.AbsoluteTime).
-                ForEach(evt => contents.Add($"{evt.AbsoluteTime},{evt.GetType()},{evt.Pattern},{evt.Channel},{_lastStreamPos},{evt}"));
+                ForEach(evt => contents.Add($"{evt.AbsoluteTime},{evt.MidiEvent.GetType().ToString().Replace("NAudio.Midi.", "")},{evt.Pattern},{evt.Channel},{_lastStreamPos},{evt.MidiEvent}"));
 
             return contents;
         }
@@ -398,7 +380,7 @@ namespace MidiStyleExplorer
         /// Makes csv dumps of some events grouped by pattern/channel.
         /// </summary>
         /// <returns></returns>
-        public List<string> GetReadableGrouped()
+        public List<string> DumpGroupedEvents()
         {
             List<string> meta = new()
             {
@@ -410,18 +392,39 @@ namespace MidiStyleExplorer
                 $"Tracks,{Tracks}"
             };
 
+            List<string> patterns = new()
+            {
+                $"",
+                $"---Patterns---",
+                "Name,Tempo,TimeSig,KeySig,Patches",
+            };
+
+            foreach(var pattern in Patterns)
+            {
+                StringBuilder sb = new();
+                for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
+                {
+                    if (pattern.Patches[i] != -1)
+                    {
+                        string spatch = (i + 1 == DrumChannel) ? "Drums" : MidiDefs.GetInstrumentDef(pattern.Patches[i]);
+                        sb.Append($"Ch{i + 1}:{spatch} ");
+                    }
+                }
+                patterns.Add($"{pattern.Name},{pattern.Tempo},{pattern.TimeSig},{pattern.KeySig},{sb}");
+            }
+
             List<string> notes = new()
             {
                 $"",
                 $"---Notes---",
-                "Time,Event,Channel,Pattern,NoteNum,NoteName,Velocity,Duration",
+                "AbsoluteTime,Event,Channel,Pattern,NoteNum,NoteName,Velocity,Duration",
             };
 
             List<string> other = new()
             {
                 $"",
                 $"---Other---",
-                "Time,Event,Channel,Pattern,Val1,Val2,Val3",
+                "AbsoluteTime,Event,Channel,Pattern,Val1,Val2,Val3",
             };
 
             foreach (var me in AllEvents)
@@ -486,6 +489,7 @@ namespace MidiStyleExplorer
 
             List<string> ret = new();
             ret.AddRange(meta);
+            ret.AddRange(patterns);
             ret.AddRange(notes);
             ret.AddRange(other);
 
@@ -530,11 +534,6 @@ namespace MidiStyleExplorer
 
             return i;
         }
-
-        //void Capture(long timestamp, string etype, int channel, string content)
-        //{
-        //    ReadableContents.Add($"{timestamp},{etype},{_currentPattern},{channel},{_lastStreamPos},{content.Replace(',', '_')}");
-        //}
         #endregion
     }
 }
