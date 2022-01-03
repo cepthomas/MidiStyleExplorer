@@ -319,8 +319,9 @@ namespace MidiStyleExplorer
                 {
                     ChannelControl ctrl = new()
                     {
-                        ChannelNumber = ch + 1,
-                        Location = new(x, y)
+                        ChannelNumber = ch,
+                        Location = new(x, y),
+                        IsDrums = ch == _drumChannel
                     };
 
                     ctrl.ChannelChange += ChannelChange;
@@ -339,7 +340,7 @@ namespace MidiStyleExplorer
                 }
 
                 // Init new stuff with contents of file/pattern.
-                if (_mfile.Filename.EndsWith(".mid"))
+                if (_mfile.Filename.ToLower().EndsWith(".mid"))
                 {
                     var pinfo = _mfile.Patterns[0];
                     GetPatternEvents(pinfo);
@@ -757,13 +758,6 @@ namespace MidiStyleExplorer
             // Quiet.
             KillAll();
 
-            // Scale to time increments used by application.
-            MidiTime mt = new()
-            {
-                InternalPpq = Common.PPQ,
-                MidiPpq = _mfile.DeltaTicksPerQuarterNote
-            };
-
             // Update patches.
             foreach (var (control, events) in _channels)
             {
@@ -771,24 +765,29 @@ namespace MidiStyleExplorer
                 control.Patch = pinfo.Patches[control.ChannelNumber];
                 if (control.Patch != -1)
                 {
-                    PatchChangeEvent evt = new(0, control.ChannelNumber + 1, control.Patch);
+                    PatchChangeEvent evt = new(0, control.ChannelNumber, control.Patch);
                     MidiSend(evt);
                 }
             }
 
             // Process pattern events.
+            int lastSubdiv = 0;
             foreach (var (control, events) in _channels)
             {
                 events.Reset();
-
                 var evts = _mfile.AllEvents.Where(e => e.Pattern == pinfo.Name && e.Channel == control.ChannelNumber).OrderBy(e => e.AbsoluteTime);
-
-                foreach (var evt in evts)
-                {
-                    int scaledTime = mt.MidiToInternal(evt.AbsoluteTime);
-                    events.Add(scaledTime, evt.MidiEvent);
-                }
+                evts.ForEach(e => events.Add(e.ScaledTime, e.MidiEvent));
+                lastSubdiv = Math.Max(lastSubdiv, events.MaxSubdiv);
             }
+
+            // Figure out times. Round up to bar.
+            int floor = lastSubdiv / (Common.PPQ * 4); // 4/4 only.
+            lastSubdiv = (floor + 1) * (Common.PPQ * 4);
+
+            barBar.Length = new BarSpan(lastSubdiv);
+            barBar.Start = BarSpan.Zero;
+            barBar.End = barBar.Length - BarSpan.OneSubdiv;
+            barBar.Current = BarSpan.Zero;
         }
         #endregion
 

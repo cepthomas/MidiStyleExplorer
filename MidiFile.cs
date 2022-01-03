@@ -17,8 +17,10 @@ namespace MidiStyleExplorer
     /// </summary>
     public class MidiFile
     {
+        #region Types
         /// <summary>Queryable descriptor for a midi event.</summary>
-        public record EventDesc(string Pattern, int Channel, long AbsoluteTime, MidiEvent MidiEvent);
+        public record EventDesc(string Pattern, int Channel, long AbsoluteTime, int ScaledTime, MidiEvent MidiEvent);
+        #endregion
 
         #region Properties - file specific
         /// <summary>From where.</summary>
@@ -168,6 +170,13 @@ namespace MidiStyleExplorer
             long startPos = br.BaseStream.Position;
             int absoluteTime = 0;
 
+            // Scale to time increments used by application.
+            MidiTime mt = new()
+            {
+                InternalPpq = Common.PPQ,
+                MidiPpq = DeltaTicksPerQuarterNote
+            };
+
             // Read all midi events.
             MidiEvent? me = null; // current
             while (br.BaseStream.Position < startPos + chunkSize)
@@ -291,7 +300,8 @@ namespace MidiStyleExplorer
             ///// Local function. /////
             void AddMidiEvent(MidiEvent evt)
             {
-                AllEvents.Add(new EventDesc(Patterns.Last().Name, evt.Channel, evt.AbsoluteTime, evt));
+                int scaledTime = mt.MidiToInternal(evt.AbsoluteTime);
+                AllEvents.Add(new EventDesc(Patterns.Last().Name, evt.Channel, evt.AbsoluteTime, scaledTime, evt));
             }
 
             return absoluteTime;

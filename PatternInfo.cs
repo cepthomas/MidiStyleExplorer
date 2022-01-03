@@ -27,7 +27,7 @@ namespace MidiStyleExplorer
         public string KeySig { get; set; } = "";
 
         /// <summary>All the channel patches. Index is 0-based channel number.</summary>
-        public int[] Patches = new int[MidiDefs.NUM_CHANNELS];
+        public int[] Patches { get; set; } = new int[MidiDefs.NUM_CHANNELS];
 
         /// <summary>Normal constructor.</summary>
         public PatternInfo()

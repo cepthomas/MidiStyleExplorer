@@ -48,7 +48,7 @@
             this.btnLoop});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1358, 27);
+            this.toolStrip1.Size = new System.Drawing.Size(998, 27);
             this.toolStrip1.TabIndex = 0;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -109,12 +109,15 @@
             // 
             // txtViewer
             // 
+            this.txtViewer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.txtViewer.Font = new System.Drawing.Font("Consolas", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.txtViewer.Location = new System.Drawing.Point(12, 483);
+            this.txtViewer.Location = new System.Drawing.Point(20, 483);
             this.txtViewer.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtViewer.MaxText = 5000;
             this.txtViewer.Name = "txtViewer";
-            this.txtViewer.Size = new System.Drawing.Size(1208, 169);
+            this.txtViewer.Size = new System.Drawing.Size(956, 160);
             this.txtViewer.TabIndex = 58;
             this.txtViewer.Text = "";
             // 
@@ -254,7 +257,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1358, 656);
+            this.ClientSize = new System.Drawing.Size(998, 656);
             this.Controls.Add(this.barBar);
             this.Controls.Add(this.sldTempo);
             this.Controls.Add(this.btnKill);

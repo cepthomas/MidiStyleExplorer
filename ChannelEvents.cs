@@ -35,6 +35,7 @@ namespace MidiStyleExplorer
             {
                 MidiEvents.Add(subdiv, new List<MidiEvent>());
             }
+
             MidiEvents[subdiv].Add(evt);
             MaxSubdiv = Math.Max(MaxSubdiv, subdiv);
             HasNotes |= evt is NoteEvent;

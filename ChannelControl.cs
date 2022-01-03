@@ -57,7 +57,12 @@ namespace MidiStyleExplorer
         }
 
         /// <summary>This is the drum channel.</summary>
-        public bool IsDrums { get; set; } = false;
+        public bool IsDrums
+        {
+            get { return _isDrums; }
+            set { _isDrums = value; FormatPatch(); }
+        }
+        bool _isDrums = false;
         #endregion
 
         /// <summary>
