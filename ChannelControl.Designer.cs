@@ -29,21 +29,21 @@ namespace MidiStyleExplorer
         /// </summary>
         private void InitializeComponent()
         {
-            this.lblNumber = new System.Windows.Forms.Label();
+            this.lblChannelNumber = new System.Windows.Forms.Label();
             this.sldVolume = new NBagOfUis.Slider();
             this.lblPatch = new System.Windows.Forms.Label();
             this.lblSolo = new System.Windows.Forms.Label();
             this.lblMute = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
-            // lblNumber
+            // lblChannelNumber
             // 
-            this.lblNumber.AutoSize = true;
-            this.lblNumber.Location = new System.Drawing.Point(2, 8);
-            this.lblNumber.Name = "lblNumber";
-            this.lblNumber.Size = new System.Drawing.Size(18, 20);
-            this.lblNumber.TabIndex = 3;
-            this.lblNumber.Text = "#";
+            this.lblChannelNumber.AutoSize = true;
+            this.lblChannelNumber.Location = new System.Drawing.Point(2, 8);
+            this.lblChannelNumber.Name = "lblNumber";
+            this.lblChannelNumber.Size = new System.Drawing.Size(18, 20);
+            this.lblChannelNumber.TabIndex = 3;
+            this.lblChannelNumber.Text = "#";
             // 
             // sldVolume
             // 
@@ -95,7 +95,7 @@ namespace MidiStyleExplorer
             this.Controls.Add(this.lblSolo);
             this.Controls.Add(this.lblPatch);
             this.Controls.Add(this.sldVolume);
-            this.Controls.Add(this.lblNumber);
+            this.Controls.Add(this.lblChannelNumber);
             this.Name = "ChannelControl";
             this.Size = new System.Drawing.Size(354, 38);
             this.Load += new System.EventHandler(this.ChannelControl_Load);
@@ -105,7 +105,7 @@ namespace MidiStyleExplorer
         }
 
         #endregion
-        private System.Windows.Forms.Label lblNumber;
+        private System.Windows.Forms.Label lblChannelNumber;
         private NBagOfUis.Slider sldVolume;
         private System.Windows.Forms.Label lblPatch;
         private System.Windows.Forms.Label lblSolo;

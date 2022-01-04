@@ -29,7 +29,7 @@ namespace MidiStyleExplorer
         public int ChannelNumber
         {
             get { return _channelNumber; }
-            set { _channelNumber = value; lblNumber.Text = $"Ch:{_channelNumber}"; }
+            set { _channelNumber = value; lblChannelNumber.Text = $"Ch:{_channelNumber}"; }
         }
         int _channelNumber = -1;
 
@@ -55,6 +55,14 @@ namespace MidiStyleExplorer
             get { return sldVolume.Value; }
             set { sldVolume.Value = Math.Min(value, 1.0); }
         }
+
+        /// <summary>This is the drum channel.</summary>
+        public bool Selected
+        {
+            get { return _selected; }
+            set { _selected = value; FormatSelect(); }
+        }
+        bool _selected = false;
 
         /// <summary>This is the drum channel.</summary>
         public bool IsDrums
@@ -83,6 +91,7 @@ namespace MidiStyleExplorer
             sldVolume.DrawColor = Common.Settings.ControlColor;
             lblSolo.Click += SoloMute_Click;
             lblMute.Click += SoloMute_Click;
+            lblChannelNumber.Click += ChannelNumber_Click;
 
             SetModeUi();
         }
@@ -218,6 +227,25 @@ namespace MidiStyleExplorer
             }
 
             return spatch;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void ChannelNumber_Click(object? sender, EventArgs e)
+        {
+            _selected = !_selected;
+            FormatSelect();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        void FormatSelect()
+        {
+            lblChannelNumber.BackColor = _selected ? Common.Settings.ControlColor : SystemColors.Control;
         }
 
         /// <summary>
