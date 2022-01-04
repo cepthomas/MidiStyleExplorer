@@ -192,7 +192,7 @@ namespace MidiStyleExplorer
             lv.Click += (object? sender, EventArgs e) =>
             {
                 int ind = lv.SelectedIndices[0];
-                Patch = ind - 1;
+                Patch = ind - 1; // skip NoPatch entry
                 ChannelChange?.Invoke(this, new() { PatchChange = true });
                 f.Close();
             };

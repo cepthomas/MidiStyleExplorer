@@ -479,13 +479,19 @@ namespace MidiStyleExplorer
                     break;
 
                 case Keys.C:
-                    txtViewer.Clear();
-                    e.Handled = true;
+                    if(e.Modifiers == 0)
+                    {
+                        txtViewer.Clear();
+                        e.Handled = true;
+                    }
                     break;
 
                 case Keys.W:
-                    txtViewer.WordWrap = !txtViewer.WordWrap;
-                    e.Handled = true;
+                    if (e.Modifiers == 0)
+                    {
+                        txtViewer.WordWrap = !txtViewer.WordWrap;
+                        e.Handled = true;
+                    }
                     break;
             }
         }
@@ -603,7 +609,7 @@ namespace MidiStyleExplorer
 
             if (chkLogMidi.Checked)
             {
-                LogMessage("MIDI_SEND", evt.ToString());
+                LogMessage("SND", evt.ToString());
             }
         }
 
@@ -613,7 +619,7 @@ namespace MidiStyleExplorer
         /// <param name="channel"></param>
         void Kill(int channel)
         {
-            ControlChangeEvent nevt = new(0, channel + 1, MidiController.AllNotesOff, 0);
+            ControlChangeEvent nevt = new(0, channel, MidiController.AllNotesOff, 0);
             MidiSend(nevt);
         }
 
@@ -625,7 +631,7 @@ namespace MidiStyleExplorer
             // Send midi stop all notes just in case.
             for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
             {
-                Kill(i);
+                Kill(i + 1);
             }
         }
         #endregion
@@ -650,7 +656,7 @@ namespace MidiStyleExplorer
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void BarBar_CurrentTimeChanged(object? sender, EventArgs e) // TODO
+        void BarBar_CurrentTimeChanged(object? sender, EventArgs e)
         {
         }
 
@@ -759,7 +765,7 @@ namespace MidiStyleExplorer
             foreach (var (control, events) in _channels)
             {
                 // Patches.
-                control.Patch = pinfo.Patches[control.ChannelNumber];
+                control.Patch = pinfo.Patches[control.ChannelNumber - 1];
                 if (control.Patch != -1)
                 {
                     PatchChangeEvent evt = new(0, control.ChannelNumber, control.Patch);
@@ -856,7 +862,7 @@ namespace MidiStyleExplorer
         /// <param name="fn">Where to put the midi.</param>
         /// <param name="pattern">Specific pattern if a style file.</param>
         /// <param name="info">Extra info to add to midi file.</param>
-        void ExportMidi(string fn, string pattern, string info) //TODO probably find a new home with more editing features.  
+        void ExportMidi(string fn, string pattern, string info) // TODO probably find a new home with more editing features.  
         {
             // Get pattern info. This should work for the simple midi file case too.
             PatternInfo pinfo = _mfile.Patterns.First(p => p.Name == pattern);
