@@ -47,7 +47,7 @@ namespace MidiStyleExplorer
             get { return _patch; }
             set { _patch = Math.Min(value, MidiDefs.MAX_MIDI); lblPatch.Text = FormatPatch(); }
         }
-        int _patch = -1;
+        int _patch = PatternInfo.NO_CHANNEL;
 
         /// <summary>Current volume.</summary>
         public double Volume
@@ -220,6 +220,10 @@ namespace MidiStyleExplorer
             if(IsDrums)
             {
                 spatch = "Drums";
+            }
+            else if(_patch == PatternInfo.NO_CHANNEL)
+            {
+                spatch = "NoChannel";
             }
             else if (_patch >= 0 && _patch < MidiDefs.MAX_MIDI)
             {

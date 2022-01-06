@@ -55,6 +55,9 @@ namespace MidiStyleExplorer
         #region Fields
         /// <summary>Save this for logging/debugging.</summary>
         long _lastStreamPos = 0;
+
+        /// <summary>Default values if not supplied in pattern. Mainly for managing patches.</summary>
+        PatternInfo _patternDefaults = new() { Tempo = 100 };
         #endregion
 
         #region Public methods
@@ -121,6 +124,9 @@ namespace MidiStyleExplorer
                         break;
                 }
             }
+
+            // Last one.
+            CleanUpPattern();
         }
         #endregion
 
@@ -210,7 +216,9 @@ namespace MidiStyleExplorer
                         break;
 
                     case PatchChangeEvent evt:
-                        Patterns.Last().Patches[evt.Channel - 1] = evt.Patch;
+                        var index = evt.Channel - 1;
+                        _patternDefaults.Patches[index] = evt.Patch;
+                        Patterns.Last().Patches[index] = evt.Patch;
                         AddMidiEvent(evt);
                         break;
 
@@ -227,17 +235,23 @@ namespace MidiStyleExplorer
                         break;
 
                     case TempoEvent evt:
-                        Patterns.Last().Tempo = (int)Math.Round(evt.Tempo);
+                        var tempo = (int)Math.Round(evt.Tempo);
+                        _patternDefaults.Tempo = tempo;
+                        Patterns.Last().Tempo = tempo;
                         AddMidiEvent(evt);
                         break;
 
                     case TimeSignatureEvent evt:
-                        Patterns.Last().TimeSig = evt.TimeSignature;
+                        var tsig = evt.TimeSignature;
+                        _patternDefaults.TimeSig = tsig;
+                        Patterns.Last().TimeSig = tsig;
                         AddMidiEvent(evt);
                         break;
 
                     case KeySignatureEvent evt:
-                        Patterns.Last().KeySig = evt.ToString();
+                        var ksig = evt.ToString();
+                        _patternDefaults.KeySig = ksig;
+                        Patterns.Last().KeySig = ksig;
                         AddMidiEvent(evt);
                         break;
 
@@ -254,8 +268,11 @@ namespace MidiStyleExplorer
                         }
                         else
                         {
+                            // Tidy up missing parts of current info.
+                            CleanUpPattern();
+
                             // Add a new pattern with defaults set to previous one.
-                            Patterns.Add(new(Patterns.Last(), evt.Text));
+                            Patterns.Add(new PatternInfo() { Name = evt.Text });
                         }
 
                         absoluteTime = 0;
@@ -283,7 +300,12 @@ namespace MidiStyleExplorer
             void AddMidiEvent(MidiEvent evt)
             {
                 int scaledTime = mt.MidiToInternal(evt.AbsoluteTime);
-                AllEvents.Add(new EventDesc(Patterns.Last().Name, evt.Channel, evt.AbsoluteTime, scaledTime, evt));
+                var pi = Patterns.Last();
+                AllEvents.Add(new EventDesc(pi.Name, evt.Channel, evt.AbsoluteTime, scaledTime, evt));
+                if (pi.Patches[evt.Channel - 1] == PatternInfo.NO_CHANNEL)
+                {
+                    pi.Patches[evt.Channel - 1] = PatternInfo.NO_PATCH;
+                }
             }
 
             return absoluteTime;
@@ -368,7 +390,7 @@ namespace MidiStyleExplorer
         public List<string> DumpSequentialEvents()
         {
             List<string> contents = new();
-            contents.Add($"AbsoluteTime,Type,Pattern,Channel,FilePos,Content");
+            contents.Add("AbsoluteTime,Event,Pattern,Channel,FilePos,Content");
 
             AllEvents.OrderBy(v => v.AbsoluteTime).
                 ForEach(evt => contents.Add($"{evt.AbsoluteTime},{evt.MidiEvent.GetType().ToString().Replace("NAudio.Midi.", "")},{evt.Pattern},{evt.Channel},{_lastStreamPos},{evt.MidiEvent}"));
@@ -388,14 +410,13 @@ namespace MidiStyleExplorer
                 $"Meta,Value",
                 $"MidiFileType,{MidiFileType}",
                 $"DeltaTicksPerQuarterNote,{DeltaTicksPerQuarterNote}",
-                //$"StartAbsoluteTime,{StartAbsoluteTime}",
                 $"Tracks,{Tracks}"
             };
 
             List<string> patterns = new()
             {
-                $"",
-                $"---Patterns---",
+                "",
+                "---Patterns---",
                 "Name,Tempo,TimeSig,KeySig,Patches",
             };
 
@@ -404,7 +425,7 @@ namespace MidiStyleExplorer
                 StringBuilder sb = new();
                 for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
                 {
-                    if (pattern.Patches[i] != -1)
+                    if (pattern.Patches[i] >= 0)
                     {
                         string spatch = (i + 1 == DrumChannel) ? "Drums" : MidiDefs.GetInstrumentDef(pattern.Patches[i]);
                         sb.Append($"Ch{i + 1}:{spatch} ");
@@ -415,23 +436,23 @@ namespace MidiStyleExplorer
 
             List<string> notes = new()
             {
-                $"",
-                $"---Notes---",
-                "AbsoluteTime,Event,Channel,Pattern,NoteNum,NoteName,Velocity,Duration",
+                "",
+                "---Notes---",
+                "AbsoluteTime,Event,Pattern,Channel,NoteNum,NoteName,Velocity,Duration",
             };
 
             List<string> other = new()
             {
-                $"",
-                $"---Other---",
-                "AbsoluteTime,Event,Channel,Pattern,Val1,Val2,Val3",
+                "",
+                "---Other---",
+                "AbsoluteTime,Event,Pattern,Channel,Val1,Val2,Val3",
             };
 
             foreach (var me in AllEvents)
             {
                 // Boilerplate.
                 string ntype = me.MidiEvent.GetType().ToString().Replace("NAudio.Midi.", "");
-                string sc = $"{me.MidiEvent.AbsoluteTime},{ntype},{me.MidiEvent.Channel},{me.Pattern}";
+                string sc = $"{me.MidiEvent.AbsoluteTime},{ntype},{me.Pattern},{me.MidiEvent.Channel}";
 
                 switch (me.MidiEvent)
                 {
@@ -498,6 +519,24 @@ namespace MidiStyleExplorer
         #endregion
 
         #region Helpers
+        /// <summary>
+        /// Fill in missing info using defaults.
+        /// </summary>
+        void CleanUpPattern()
+        {
+            var pi = Patterns.Last();
+            if (pi.Tempo == 0) pi.Tempo = _patternDefaults.Tempo;
+            if (pi.TimeSig == "") pi.TimeSig = _patternDefaults.TimeSig;
+            if (pi.KeySig == "") pi.KeySig = _patternDefaults.KeySig;
+            for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
+            {
+                if (pi.Patches[i] == PatternInfo.NO_PATCH && _patternDefaults.Patches[i] >= 0)
+                {
+                    pi.Patches[i] = _patternDefaults.Patches[i];
+                }
+            }
+        }
+
         /// <summary>
         /// Read a number from stream and adjust endianess.
         /// </summary>

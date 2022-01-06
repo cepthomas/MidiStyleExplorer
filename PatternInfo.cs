@@ -14,11 +14,17 @@ namespace MidiStyleExplorer
     /// <summary>Properties associated with a pattern.</summary>
     public class PatternInfo
     {
+        /// <summary>Special value for Patches.</summary>
+        public const int NO_CHANNEL = -2;
+
+        /// <summary>Special value for Patches.</summary>
+        public const int NO_PATCH = -1;
+
         /// <summary>Pattern name. Empty indicates single pattern aka plain midi file.</summary>
         public string Name { get; set; } = "";
 
         /// <summary>Tempo, if supplied by file. Defaults to 100 if missing.</summary>
-        public int Tempo { get; set; } = 100;
+        public int Tempo { get; set; } = 0;
 
         /// <summary>Time signature, if supplied by file.</summary>
         public string TimeSig { get; set; } = "";
@@ -34,21 +40,7 @@ namespace MidiStyleExplorer
         {
             for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
             {
-                Patches[i] = -1;
-            }
-        }
-
-        /// <summary>Copy constructor for defaults in case the new pattern doesn't change any.</summary>
-        public PatternInfo(PatternInfo src, string name)
-        {
-            Name = name;
-            Tempo = src.Tempo;
-            TimeSig = src.TimeSig;
-            KeySig = src.KeySig;
-
-            for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
-            {
-                Patches[i] = src.Patches[i];
+                Patches[i] = NO_CHANNEL;
             }
         }
 
@@ -74,9 +66,24 @@ namespace MidiStyleExplorer
 
             for(int i = 0; i <MidiDefs.NUM_CHANNELS; i++)
             {
-                if(Patches[i] != -1)
+                string s;
+
+                if (Patches[i] == NO_CHANNEL)
                 {
-                    content.Add($"Ch:{i + 1} Patch:{MidiDefs.GetInstrumentDef(Patches[i])}");
+                    s = "NoChannel";
+                }
+                else if (Patches[i] == NO_PATCH)
+                {
+                    s = "NoPatch";
+                }
+                else
+                {
+                    s = MidiDefs.GetInstrumentDef(Patches[i]);
+                }
+
+                if (Patches[i] != -1)
+                {
+                    content.Add($"Ch:{i + 1} Patch:{s}");
                 }
             }
 

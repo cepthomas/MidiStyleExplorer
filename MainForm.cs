@@ -15,6 +15,8 @@ using NAudio.Midi;
 
 // FUTURE solo/mute individual drums.
 
+// TODO What are the other style parts? Can I support some?
+
 namespace MidiStyleExplorer
 {
     public partial class MainForm : Form
@@ -107,6 +109,13 @@ namespace MidiStyleExplorer
             }
 
             LogMessage("INF", "C to clear, W to wrap");
+
+            // Look for filename passed in.
+            string[] args = Environment.GetCommandLineArgs();
+            if (args.Length > 1)
+            {
+                OpenFile(args[1]);
+            }
         }
 
         /// <summary>
@@ -297,52 +306,19 @@ namespace MidiStyleExplorer
             {
                 Rewind();
 
-                // Clean out old.
-                foreach (var (control, events) in _channels)
-                {
-                    Controls.Remove(control);
-                }
-                _channels.Clear();
-
                 // Process the file.
                 _mfile = new MidiFile { IgnoreNoisy = true };
                 _mfile.Read(fn);
                 // All channel numbers.
-                var channels = _mfile.AllEvents.Select(e => e.Channel).Distinct().OrderBy(e => e);
-
-                // Make new controls and data holders.
-                int x = lbPatterns.Right + 5;
-                int y = lbPatterns.Top;
-                foreach(var ch in channels)
-                {
-                    ChannelControl ctrl = new()
-                    {
-                        ChannelNumber = ch,
-                        Location = new(x, y),
-                        IsDrums = ch == _drumChannel
-                    };
-
-                    ctrl.ChannelChange += ChannelChange;
-                    Controls.Add(ctrl);
-                    _channels.Add((ctrl, new()));
-
-                    if(_channels.Count % 8 == 0)
-                    {
-                        // new columnn
-                        x = ctrl.Right + 5;
-                        y = lbPatterns.Top;
-                    }
-                    else
-                    {
-                        y += ctrl.Height + 5;
-                    }
-                }
+                //var channels = _mfile.AllEvents.Select(e => e.Channel).Distinct().OrderBy(e => e);
 
                 // Init new stuff with contents of file/pattern.
                 if (_mfile.Filename.ToLower().EndsWith(".mid"))
                 {
                     var pinfo = _mfile.Patterns[0];
-                    GetPatternEvents(pinfo);
+                    LoadPattern(pinfo);
+                    //GetPatternEvents(pinfo);
+                    //CreatePatternControls(pinfo);
                 }
                 else // .sty
                 {
@@ -369,7 +345,9 @@ namespace MidiStyleExplorer
                     if (lbPatterns.Items.Count > 0)
                     {
                         var pinfo = GetPatternInfo(lbPatterns.Items[0].ToString()!);
-                        GetPatternEvents(pinfo!);
+                        LoadPattern(pinfo!);
+                        //GetPatternEvents(pinfo!);
+                        //CreatePatternControls(pinfo!);
                     }
                 }
 
@@ -616,7 +594,7 @@ namespace MidiStyleExplorer
         /// <summary>
         /// Send all notes off.
         /// </summary>
-        /// <param name="channel"></param>
+        /// <param name="channel">1-based channel</param>
         void Kill(int channel)
         {
             ControlChangeEvent nevt = new(0, channel, MidiController.AllNotesOff, 0);
@@ -690,7 +668,9 @@ namespace MidiStyleExplorer
         void Patterns_SelectedIndexChanged(object? sender, EventArgs e)
         {
             var pinfo = GetPatternInfo(lbPatterns.SelectedItem.ToString()!);
-            GetPatternEvents(pinfo!);
+            LoadPattern(pinfo!);
+            //GetPatternEvents(pinfo!);
+            //CreatePatternControls(pinfo!);
 
             Rewind();
             if (btnAutoplay.Checked)
@@ -753,34 +733,72 @@ namespace MidiStyleExplorer
         }
 
         /// <summary>
-        /// Get midi file contents for this pattern and convert into the internal format for playing.
+        /// 
         /// </summary>
         /// <param name="pinfo"></param>
-        void GetPatternEvents(PatternInfo pinfo)
+        void LoadPattern(PatternInfo pinfo)
         {
             // Quiet.
             KillAll();
 
-            // Update patches.
+            // Clean out old.
             foreach (var (control, events) in _channels)
             {
-                // Patches.
-                control.Patch = pinfo.Patches[control.ChannelNumber - 1];
-                if (control.Patch != -1)
-                {
-                    PatchChangeEvent evt = new(0, control.ChannelNumber, control.Patch);
-                    MidiSend(evt);
-                }
+                Controls.Remove(control);
             }
+            _channels.Clear();
 
-            // Process pattern events.
+            // Get the new.
             int lastSubdiv = 0;
-            foreach (var (control, events) in _channels)
+            int x = lbPatterns.Right + 5;
+            int y = lbPatterns.Top;
+
+            for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
             {
-                events.Reset();
-                var evts = _mfile.AllEvents.Where(e => e.Pattern == pinfo.Name && e.Channel == control.ChannelNumber).OrderBy(e => e.AbsoluteTime);
-                evts.ForEach(e => events.Add(e.ScaledTime, e.MidiEvent));
-                lastSubdiv = Math.Max(lastSubdiv, events.MaxSubdiv);
+                int ch = i + 1;
+                int patch = pinfo.Patches[i];
+
+                if (patch > PatternInfo.NO_CHANNEL)
+                {
+                    // Make new controls.
+                    ChannelControl control = new()
+                    {
+                        ChannelNumber = ch,
+                        Patch = patch,
+                        Location = new(x, y),
+                        IsDrums = ch == _drumChannel
+                    };
+
+                    control.ChannelChange += ChannelChange;
+                    Controls.Add(control);
+
+                    // Get pattern events.
+                    var events = new ChannelEvents();
+                    var evts = _mfile.AllEvents.Where(e => e.Pattern == pinfo.Name && e.Channel == control.ChannelNumber).OrderBy(e => e.AbsoluteTime);
+                    evts.ForEach(e => events.Add(e.ScaledTime, e.MidiEvent));
+                    lastSubdiv = Math.Max(lastSubdiv, events.MaxSubdiv);
+
+                    _channels.Add((control, events));
+
+                    // Adjust positioning.
+                    if (_channels.Count % 8 == 0)
+                    {
+                        // new columnn
+                        x = control.Right + 5;
+                        y = lbPatterns.Top;
+                    }
+                    else
+                    {
+                        y += control.Height + 5;
+                    }
+
+                    // Send real patches.
+                    if (patch > PatternInfo.NO_PATCH)
+                    {
+                        PatchChangeEvent evt = new(0, ch, patch);
+                        MidiSend(evt);
+                    }
+                }
             }
 
             // Figure out times. Round up to bar.
@@ -858,11 +876,12 @@ namespace MidiStyleExplorer
 
         /// <summary>
         /// Output part or all of the file to a new midi file.
+        /// TODO probably find a new home with more editing features. Select channels to export. Honor volumes - or autoscale to max out?
         /// </summary>
         /// <param name="fn">Where to put the midi.</param>
         /// <param name="pattern">Specific pattern if a style file.</param>
         /// <param name="info">Extra info to add to midi file.</param>
-        void ExportMidi(string fn, string pattern, string info) // TODO probably find a new home with more editing features.  
+        void ExportMidi(string fn, string pattern, string info) 
         {
             // Get pattern info. This should work for the simple midi file case too.
             PatternInfo pinfo = _mfile.Patterns.First(p => p.Name == pattern);
@@ -890,7 +909,7 @@ namespace MidiStyleExplorer
             // Patches.
             for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
             {
-                if (pinfo.Patches[i] != -1)
+                if (pinfo.Patches[i] >= 0)
                 {
                     outEvents.Add(new PatchChangeEvent(0, i + 1, pinfo.Patches[i]));
                 }
