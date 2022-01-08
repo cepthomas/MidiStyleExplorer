@@ -74,12 +74,12 @@ namespace MidiStyleExplorer
             txtViewer.Colors.Add("ERR", Color.LightPink);
             txtViewer.Colors.Add("WRN:", Color.Plum);
 
-            // Other UI configs.
-            chkDrumsOn1.FlatAppearance.CheckedBackColor = Common.Settings.ControlColor;
-            chkLogMidi.FlatAppearance.CheckedBackColor = Common.Settings.ControlColor;
-            chkPlay.FlatAppearance.CheckedBackColor = Common.Settings.ControlColor;
+            // Toolbar configs.
             btnAutoplay.Checked = Common.Settings.Autoplay;
             btnLoop.Checked = Common.Settings.Loop;
+
+            // Other UI configs.
+            chkPlay.FlatAppearance.CheckedBackColor = Common.Settings.ControlColor;
             sldVolume.Value = Common.Settings.Volume;
             sldVolume.DrawColor = Common.Settings.ControlColor;
             sldTempo.DrawColor = Common.Settings.ControlColor;
@@ -340,8 +340,7 @@ namespace MidiStyleExplorer
 
                     if (lbPatterns.Items.Count > 0)
                     {
-                        var pinfo = GetPatternInfo(lbPatterns.Items[0].ToString()!);
-                        LoadPattern(pinfo!);
+                        lbPatterns.SelectedIndex = 0;
                     }
                 }
 
@@ -579,7 +578,7 @@ namespace MidiStyleExplorer
         {
             _midiOut?.Send(evt.GetAsShortMessage());
 
-            if (chkLogMidi.Checked)
+            if (btnLogMidi.Checked)
             {
                 LogMessage("SND", evt.ToString());
             }
@@ -639,7 +638,7 @@ namespace MidiStyleExplorer
         /// <param name="e"></param>
         void DrumsOn1_CheckedChanged(object? sender, EventArgs e)
         {
-            _drumChannel = chkDrumsOn1.Checked ? 1 : MidiDefs.DEFAULT_DRUM_CHANNEL;
+            _drumChannel = btnDrumsOn1.Checked ? 1 : MidiDefs.DEFAULT_DRUM_CHANNEL;
             // Update UI.
             _channels.ForEach(ch => ch.control.IsDrums = ch.control.ChannelNumber == _drumChannel);
         }
@@ -742,15 +741,22 @@ namespace MidiStyleExplorer
 
             // Get the new.
             int lastSubdiv = 0;
-            int x = lbPatterns.Right + 5;
-            int y = lbPatterns.Top;
+            int x = sldVolume.Right + 5;
+            int y = sldVolume.Top;
 
             for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
             {
                 int ch = i + 1;
                 int patch = pinfo.Patches[i];
 
-                if (patch > PatternInfo.NO_CHANNEL)
+                // Get pattern events.
+                var chEvents = new ChannelEvents();
+                var evts = _mfile.AllEvents.
+                    Where(e => e.Pattern == pinfo.Name && e.Channel == ch && (e.MidiEvent is NoteEvent || e.MidiEvent is NoteOnEvent)).
+                    OrderBy(e => e.AbsoluteTime);
+                evts.ForEach(e => chEvents.Add(e.ScaledTime, e.MidiEvent)); // use internal time
+
+                if(evts.Any())
                 {
                     // Make new controls.
                     ChannelControl control = new()
@@ -764,27 +770,22 @@ namespace MidiStyleExplorer
                     control.ChannelChange += ChannelChange;
                     Controls.Add(control);
 
-                    // Get pattern events.
-                    var chEvents = new ChannelEvents();
-                    var evts = _mfile.AllEvents.
-                        Where(e => e.Pattern == pinfo.Name && e.Channel == control.ChannelNumber && (e.MidiEvent is NoteEvent || e.MidiEvent is NoteOnEvent)).
-                        OrderBy(e => e.AbsoluteTime);
-                    evts.ForEach(e => chEvents.Add(e.ScaledTime, e.MidiEvent)); // use internal time
                     lastSubdiv = Math.Max(lastSubdiv, chEvents.MaxSubdiv);
 
                     _channels.Add((control, chEvents));
 
                     // Adjust positioning.
-                    if (_channels.Count % 8 == 0)
-                    {
-                        // new columnn
-                        x = control.Right + 5;
-                        y = lbPatterns.Top;
-                    }
-                    else
-                    {
-                        y += control.Height + 5;
-                    }
+                    //if (_channels.Count % 8 == 0)
+                    //{
+                    //    // new columnn
+                    //    x = control.Right + 5;
+                    //    y = lbPatterns.Top;
+                    //}
+                    //else
+                    //{
+                    //    y += control.Height + 5;
+                    //}
+                    y += control.Height + 5;
 
                     // Send real patches.
                     if (patch > PatternInfo.NO_PATCH)

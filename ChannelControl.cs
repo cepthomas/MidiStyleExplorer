@@ -47,7 +47,7 @@ namespace MidiStyleExplorer
             get { return _patch; }
             set { _patch = Math.Min(value, MidiDefs.MAX_MIDI); lblPatch.Text = FormatPatch(); }
         }
-        int _patch = PatternInfo.NO_CHANNEL;
+        int _patch = PatternInfo.NO_PATCH;
 
         /// <summary>Current volume.</summary>
         public double Volume
@@ -68,7 +68,7 @@ namespace MidiStyleExplorer
         public bool IsDrums
         {
             get { return _isDrums; }
-            set { _isDrums = value; FormatPatch(); }
+            set { _isDrums = value; lblPatch.Text = FormatPatch(); }
         }
         bool _isDrums = false;
         #endregion
@@ -215,21 +215,7 @@ namespace MidiStyleExplorer
         /// </summary>
         string FormatPatch()
         {
-            string spatch = "NoPatch"; // default
-
-            if(IsDrums)
-            {
-                spatch = "Drums";
-            }
-            else if(_patch == PatternInfo.NO_CHANNEL)
-            {
-                spatch = "NoChannel";
-            }
-            else if (_patch >= 0 && _patch < MidiDefs.MAX_MIDI)
-            {
-                spatch = MidiDefs.GetInstrumentDef(_patch);
-            }
-
+            string spatch = IsDrums ? "Drums" : _patch == PatternInfo.NO_PATCH ? "NoPatch" : MidiDefs.GetInstrumentDef(_patch);
             return spatch;
         }
 

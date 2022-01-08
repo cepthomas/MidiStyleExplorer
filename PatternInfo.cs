@@ -14,8 +14,8 @@ namespace MidiStyleExplorer
     /// <summary>Properties associated with a pattern.</summary>
     public class PatternInfo
     {
-        /// <summary>Special value for Patches.</summary>
-        public const int NO_CHANNEL = -2;
+        ///// <summary>Special value for Patches.</summary>
+        //public const int NO_CHANNEL = -2;
 
         /// <summary>Special value for Patches.</summary>
         public const int NO_PATCH = -1;
@@ -40,7 +40,7 @@ namespace MidiStyleExplorer
         {
             for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
             {
-                Patches[i] = NO_CHANNEL;
+                Patches[i] = NO_PATCH;
             }
         }
 
@@ -66,25 +66,8 @@ namespace MidiStyleExplorer
 
             for(int i = 0; i <MidiDefs.NUM_CHANNELS; i++)
             {
-                string s;
-
-                if (Patches[i] == NO_CHANNEL)
-                {
-                    s = "NoChannel";
-                }
-                else if (Patches[i] == NO_PATCH)
-                {
-                    s = "NoPatch";
-                }
-                else
-                {
-                    s = MidiDefs.GetInstrumentDef(Patches[i]);
-                }
-
-                if (Patches[i] != -1)
-                {
-                    content.Add($"Ch:{i + 1} Patch:{s}");
-                }
+                string s = Patches[i] == NO_PATCH ? "NoPatch" : MidiDefs.GetInstrumentDef(Patches[i]);
+                content.Add($"Ch:{i + 1} Patch:{s}");
             }
 
             return string.Join(' ', content);

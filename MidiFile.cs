@@ -311,10 +311,6 @@ namespace MidiStyleExplorer
                 int scaledTime = mt.MidiToInternal(evt.AbsoluteTime);
                 var pi = Patterns.Last();
                 AllEvents.Add(new EventDesc(pi.Name, evt.Channel, evt.AbsoluteTime, scaledTime, evt));
-                if (pi.Patches[evt.Channel - 1] == PatternInfo.NO_CHANNEL)
-                {
-                    pi.Patches[evt.Channel - 1] = PatternInfo.NO_PATCH;
-                }
             }
 
             return absoluteTime;

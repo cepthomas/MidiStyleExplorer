@@ -17,12 +17,17 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.fileDropDownButton = new System.Windows.Forms.ToolStripDropDownButton();
             this.btnSettings = new System.Windows.Forms.ToolStripButton();
             this.btnAbout = new System.Windows.Forms.ToolStripButton();
             this.btnAutoplay = new System.Windows.Forms.ToolStripButton();
             this.btnLoop = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.btnDrumsOn1 = new System.Windows.Forms.ToolStripButton();
+            this.btnLogMidi = new System.Windows.Forms.ToolStripButton();
+            this.btnKillMidi = new System.Windows.Forms.ToolStripButton();
             this.txtViewer = new NBagOfUis.TextViewer();
             this.sldVolume = new NBagOfUis.Slider();
             this.btnRewind = new System.Windows.Forms.Button();
@@ -30,10 +35,7 @@
             this.barBar = new NBagOfUis.BarBar();
             this.sldTempo = new NBagOfUis.Slider();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.btnKill = new System.Windows.Forms.Button();
             this.lbPatterns = new System.Windows.Forms.ListBox();
-            this.chkDrumsOn1 = new System.Windows.Forms.CheckBox();
-            this.chkLogMidi = new System.Windows.Forms.CheckBox();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -45,7 +47,11 @@
             this.btnSettings,
             this.btnAbout,
             this.btnAutoplay,
-            this.btnLoop});
+            this.btnLoop,
+            this.toolStripSeparator1,
+            this.btnDrumsOn1,
+            this.btnLogMidi,
+            this.btnKillMidi});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(998, 27);
@@ -107,6 +113,45 @@
             this.btnLoop.Text = "toolStripButton1";
             this.btnLoop.ToolTipText = "Loop forever";
             // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 27);
+            // 
+            // btnDrumsOn1
+            // 
+            this.btnDrumsOn1.CheckOnClick = true;
+            this.btnDrumsOn1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.btnDrumsOn1.Image = ((System.Drawing.Image)(resources.GetObject("btnDrumsOn1.Image")));
+            this.btnDrumsOn1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnDrumsOn1.Name = "btnDrumsOn1";
+            this.btnDrumsOn1.Size = new System.Drawing.Size(32, 24);
+            this.btnDrumsOn1.Text = "D1";
+            this.btnDrumsOn1.ToolTipText = "Drums are on channel 1";
+            this.btnDrumsOn1.Click += new System.EventHandler(this.DrumsOn1_CheckedChanged);
+            // 
+            // btnLogMidi
+            // 
+            this.btnLogMidi.CheckOnClick = true;
+            this.btnLogMidi.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.btnLogMidi.Image = global::MidiStyleExplorer.Properties.Resources.glyphicons_170_record;
+            this.btnLogMidi.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnLogMidi.Name = "btnLogMidi";
+            this.btnLogMidi.Size = new System.Drawing.Size(29, 24);
+            this.btnLogMidi.Text = "toolStripButton1";
+            this.btnLogMidi.ToolTipText = "Enable logging midi events";
+            // 
+            // btnKillMidi
+            // 
+            this.btnKillMidi.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.btnKillMidi.Image = global::MidiStyleExplorer.Properties.Resources.glyphicons_242_flash;
+            this.btnKillMidi.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnKillMidi.Name = "btnKillMidi";
+            this.btnKillMidi.Size = new System.Drawing.Size(29, 24);
+            this.btnKillMidi.Text = "toolStripButton1";
+            this.btnKillMidi.ToolTipText = "Kill all midi channels";
+            this.btnKillMidi.Click += new System.EventHandler(this.Kill_Click);
+            // 
             // txtViewer
             // 
             this.txtViewer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -114,11 +159,11 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtViewer.BackColor = System.Drawing.Color.Snow;
             this.txtViewer.Font = new System.Drawing.Font("Lucida Console", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.txtViewer.Location = new System.Drawing.Point(20, 483);
+            this.txtViewer.Location = new System.Drawing.Point(20, 551);
             this.txtViewer.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtViewer.MaxText = 5000;
             this.txtViewer.Name = "txtViewer";
-            this.txtViewer.Size = new System.Drawing.Size(956, 160);
+            this.txtViewer.Size = new System.Drawing.Size(956, 92);
             this.txtViewer.TabIndex = 58;
             this.txtViewer.Text = "";
             // 
@@ -128,14 +173,14 @@
             this.sldVolume.DecPlaces = 1;
             this.sldVolume.DrawColor = System.Drawing.Color.Fuchsia;
             this.sldVolume.Label = "vol";
-            this.sldVolume.Location = new System.Drawing.Point(20, 113);
+            this.sldVolume.Location = new System.Drawing.Point(20, 105);
             this.sldVolume.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.sldVolume.Maximum = 2D;
             this.sldVolume.Minimum = 0D;
             this.sldVolume.Name = "sldVolume";
             this.sldVolume.Orientation = System.Windows.Forms.Orientation.Horizontal;
             this.sldVolume.ResetValue = 0D;
-            this.sldVolume.Size = new System.Drawing.Size(98, 50);
+            this.sldVolume.Size = new System.Drawing.Size(98, 40);
             this.sldVolume.TabIndex = 42;
             this.sldVolume.Value = 1D;
             // 
@@ -171,12 +216,12 @@
             this.barBar.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.barBar.FontLarge = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.barBar.FontSmall = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.barBar.Location = new System.Drawing.Point(134, 42);
+            this.barBar.Location = new System.Drawing.Point(131, 42);
             this.barBar.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.barBar.MarkerColor = System.Drawing.Color.Black;
             this.barBar.Name = "barBar";
             this.barBar.ProgressColor = System.Drawing.Color.NavajoWhite;
-            this.barBar.Size = new System.Drawing.Size(842, 50);
+            this.barBar.Size = new System.Drawing.Size(399, 50);
             this.barBar.Snap = NBagOfUis.BarBar.SnapType.Bar;
             this.barBar.SubdivsPerBeat = 8;
             this.barBar.TabIndex = 82;
@@ -188,30 +233,18 @@
             this.sldTempo.DecPlaces = 0;
             this.sldTempo.DrawColor = System.Drawing.Color.White;
             this.sldTempo.Label = "BPM";
-            this.sldTempo.Location = new System.Drawing.Point(20, 180);
+            this.sldTempo.Location = new System.Drawing.Point(20, 156);
             this.sldTempo.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.sldTempo.Maximum = 200D;
             this.sldTempo.Minimum = 50D;
             this.sldTempo.Name = "sldTempo";
             this.sldTempo.Orientation = System.Windows.Forms.Orientation.Horizontal;
             this.sldTempo.ResetValue = 50D;
-            this.sldTempo.Size = new System.Drawing.Size(98, 50);
+            this.sldTempo.Size = new System.Drawing.Size(98, 40);
             this.sldTempo.TabIndex = 80;
             this.toolTip.SetToolTip(this.sldTempo, "Tempo adjuster");
             this.sldTempo.Value = 100D;
             this.sldTempo.ValueChanged += new System.EventHandler(this.Tempo_ValueChanged);
-            // 
-            // btnKill
-            // 
-            this.btnKill.Image = global::MidiStyleExplorer.Properties.Resources.glyphicons_242_flash;
-            this.btnKill.Location = new System.Drawing.Point(62, 299);
-            this.btnKill.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.btnKill.Name = "btnKill";
-            this.btnKill.Size = new System.Drawing.Size(32, 40);
-            this.btnKill.TabIndex = 89;
-            this.toolTip.SetToolTip(this.btnKill, "Kill all midi channels");
-            this.btnKill.UseVisualStyleBackColor = true;
-            this.btnKill.Click += new System.EventHandler(this.Kill_Click);
             // 
             // lbPatterns
             // 
@@ -219,40 +252,13 @@
             this.lbPatterns.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lbPatterns.FormattingEnabled = true;
             this.lbPatterns.ItemHeight = 20;
-            this.lbPatterns.Location = new System.Drawing.Point(134, 113);
+            this.lbPatterns.Location = new System.Drawing.Point(20, 204);
             this.lbPatterns.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.lbPatterns.Name = "lbPatterns";
-            this.lbPatterns.Size = new System.Drawing.Size(131, 222);
+            this.lbPatterns.Size = new System.Drawing.Size(98, 342);
             this.lbPatterns.TabIndex = 88;
             this.toolTip.SetToolTip(this.lbPatterns, "All patterns in style file");
             this.lbPatterns.SelectedIndexChanged += new System.EventHandler(this.Patterns_SelectedIndexChanged);
-            // 
-            // chkDrumsOn1
-            // 
-            this.chkDrumsOn1.Appearance = System.Windows.Forms.Appearance.Button;
-            this.chkDrumsOn1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.chkDrumsOn1.Location = new System.Drawing.Point(20, 246);
-            this.chkDrumsOn1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.chkDrumsOn1.Name = "chkDrumsOn1";
-            this.chkDrumsOn1.Size = new System.Drawing.Size(98, 34);
-            this.chkDrumsOn1.TabIndex = 87;
-            this.chkDrumsOn1.Text = "Drums on 1";
-            this.toolTip.SetToolTip(this.chkDrumsOn1, "Drums are on channel 1");
-            this.chkDrumsOn1.UseVisualStyleBackColor = true;
-            this.chkDrumsOn1.CheckedChanged += new System.EventHandler(this.DrumsOn1_CheckedChanged);
-            // 
-            // chkLogMidi
-            // 
-            this.chkLogMidi.Appearance = System.Windows.Forms.Appearance.Button;
-            this.chkLogMidi.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.chkLogMidi.Image = global::MidiStyleExplorer.Properties.Resources.glyphicons_170_record;
-            this.chkLogMidi.Location = new System.Drawing.Point(20, 299);
-            this.chkLogMidi.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.chkLogMidi.Name = "chkLogMidi";
-            this.chkLogMidi.Size = new System.Drawing.Size(32, 40);
-            this.chkLogMidi.TabIndex = 86;
-            this.toolTip.SetToolTip(this.chkLogMidi, "Enable logging midi events");
-            this.chkLogMidi.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
@@ -261,10 +267,7 @@
             this.ClientSize = new System.Drawing.Size(998, 656);
             this.Controls.Add(this.barBar);
             this.Controls.Add(this.sldTempo);
-            this.Controls.Add(this.btnKill);
             this.Controls.Add(this.lbPatterns);
-            this.Controls.Add(this.chkDrumsOn1);
-            this.Controls.Add(this.chkLogMidi);
             this.Controls.Add(this.txtViewer);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.chkPlay);
@@ -296,12 +299,13 @@
         private System.Windows.Forms.ToolTip toolTip;
         private NBagOfUis.BarBar barBar;
         private NBagOfUis.Slider sldTempo;
-        private System.Windows.Forms.Button btnKill;
         private System.Windows.Forms.ListBox lbPatterns;
-        private System.Windows.Forms.CheckBox chkDrumsOn1;
-        private System.Windows.Forms.CheckBox chkLogMidi;
         private System.Windows.Forms.ToolStripButton btnAutoplay;
         private System.Windows.Forms.ToolStripButton btnLoop;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripButton btnDrumsOn1;
+        private System.Windows.Forms.ToolStripButton btnLogMidi;
+        private System.Windows.Forms.ToolStripButton btnKillMidi;
     }
 }
 
