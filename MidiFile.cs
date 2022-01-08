@@ -40,19 +40,23 @@ namespace MidiStyleExplorer
         /// <summary>All file pattern sections. Plain midi files will have only one/unnamed.</summary>
         public List<PatternInfo> Patterns { get; private set; } = new();
 
-        /// <summary>All the midi events. This is the verbatim content of the file with no time scaling.</summary>
+        /// <summary>All the midi events. This is the verbatim content of the file.</summary>
         public List<EventDesc> AllEvents { get; private set; } = new();
+
+        /// <summary>Just the music notes.</summary>
+        public List<EventDesc> NoteEvents { get; private set; } = new();
         #endregion
 
         #region Properties set by client
         /// <summary>Sometimes drums are not on the default channel.</summary>
         public int DrumChannel { get; set; } = MidiDefs.DEFAULT_DRUM_CHANNEL;
 
-        /// <summary>Don't include some events.</summary>
-        public bool IgnoreNoisy { get; set; } = true;
         #endregion
 
         #region Fields
+        /// <summary>Include events like controller changes, pitch wheel, ...</summary>
+        bool _includeNoisy = false;
+
         /// <summary>Save this for logging/debugging.</summary>
         long _lastStreamPos = 0;
 
@@ -65,14 +69,17 @@ namespace MidiStyleExplorer
         /// Read a file.
         /// </summary>
         /// <param name="fn"></param>
-        public void Read(string fn)
+        public void Read(string fn, bool includeNoisy = false)
         {
+            _includeNoisy = includeNoisy;
+
             // Init everything.
             AllEvents.Clear();
             Patterns.Clear();
             Patterns.Add(new()); // always at least one
             Filename = fn;
             DeltaTicksPerQuarterNote = 0;
+            _lastStreamPos = 0;
 
             using var br = new BinaryReader(File.OpenRead(fn));
             bool done = false;
@@ -80,6 +87,8 @@ namespace MidiStyleExplorer
             while (!done)
             {
                 var sectionName = Encoding.UTF8.GetString(br.ReadBytes(4));
+
+                Debug.WriteLine($"{sectionName}:{_lastStreamPos}");
 
                 switch (sectionName)
                 {
@@ -202,16 +211,16 @@ namespace MidiStyleExplorer
                         break;
 
                     case ControlChangeEvent evt:
-                        if (!IgnoreNoisy)
+                        if (_includeNoisy)
                         {
                             AddMidiEvent(evt);
                         }
                         break;
 
                     case PitchWheelChangeEvent evt:
-                        if (!IgnoreNoisy)
+                        if (_includeNoisy)
                         {
-                            //AddMidiEvent(evt);
+                            AddMidiEvent(evt);
                         }
                         break;
 
@@ -223,7 +232,7 @@ namespace MidiStyleExplorer
                         break;
 
                     case SysexEvent evt:
-                        if (!IgnoreNoisy)
+                        if (_includeNoisy)
                         {
                             AddMidiEvent(evt);
                         }
@@ -296,7 +305,7 @@ namespace MidiStyleExplorer
                 }
             }
 
-            ///// Local function. /////
+            ///// Local functiond. /////
             void AddMidiEvent(MidiEvent evt)
             {
                 int scaledTime = mt.MidiToInternal(evt.AbsoluteTime);
@@ -384,16 +393,17 @@ namespace MidiStyleExplorer
         #region Output formatters
         /// <summary>
         /// Dump the contents in a csv readable form.
-        /// This is as the events appear in the original file plus some other stuff for debugging.
+        /// This is as the events appear in the original file.
         /// </summary>
         /// <returns></returns>
         public List<string> DumpSequentialEvents()
         {
             List<string> contents = new();
-            contents.Add("AbsoluteTime,Event,Pattern,Channel,FilePos,Content");
+            contents.Add("AbsoluteTime,Event,Pattern,Channel,Content");
 
             AllEvents.OrderBy(v => v.AbsoluteTime).
-                ForEach(evt => contents.Add($"{evt.AbsoluteTime},{evt.MidiEvent.GetType().ToString().Replace("NAudio.Midi.", "")},{evt.Pattern},{evt.Channel},{_lastStreamPos},{evt.MidiEvent}"));
+                ForEach(evt => contents.Add($"{evt.AbsoluteTime},{evt.MidiEvent.GetType().ToString().Replace("NAudio.Midi.", "")}," +
+                $"{evt.Pattern},{evt.Channel},{evt.MidiEvent}"));
 
             return contents;
         }
@@ -404,9 +414,11 @@ namespace MidiStyleExplorer
         /// <returns></returns>
         public List<string> DumpGroupedEvents()
         {
+            bool includeOther = false;
+
             List<string> meta = new()
             {
-                $"---Meta---",
+                $"---------------------Meta---------------------",
                 $"Meta,Value",
                 $"MidiFileType,{MidiFileType}",
                 $"DeltaTicksPerQuarterNote,{DeltaTicksPerQuarterNote}",
@@ -416,7 +428,7 @@ namespace MidiStyleExplorer
             List<string> patterns = new()
             {
                 "",
-                "---Patterns---",
+                "---------------------Patterns---------------------",
                 "Name,Tempo,TimeSig,KeySig,Patches",
             };
 
@@ -437,22 +449,30 @@ namespace MidiStyleExplorer
             List<string> notes = new()
             {
                 "",
-                "---Notes---",
-                "AbsoluteTime,Event,Pattern,Channel,NoteNum,NoteName,Velocity,Duration",
+                "---------------------Notes---------------------",
+                "AbsoluteTime,Pattern,Channel,Event,NoteNum,NoteName,Velocity,Duration",
             };
 
             List<string> other = new()
             {
                 "",
-                "---Other---",
-                "AbsoluteTime,Event,Pattern,Channel,Val1,Val2,Val3",
+                "---------------------Other---------------------",
+                "AbsoluteTime,Pattern,Channel,Event,Val1,Val2,Val3",
             };
 
+            string lastPattern = "";
             foreach (var me in AllEvents)
             {
+                if(me.Pattern != lastPattern)
+                {
+                    notes.Add($"---------------------{me.Pattern}-------------------------");
+                    other.Add($"---------------------{me.Pattern}-------------------------");
+                    lastPattern = me.Pattern;
+                }
+
                 // Boilerplate.
                 string ntype = me.MidiEvent.GetType().ToString().Replace("NAudio.Midi.", "");
-                string sc = $"{me.MidiEvent.AbsoluteTime},{ntype},{me.Pattern},{me.MidiEvent.Channel}";
+                string sc = $"{me.MidiEvent.AbsoluteTime},{me.Pattern},{me.MidiEvent.Channel},{ntype}";
 
                 switch (me.MidiEvent)
                 {
@@ -512,7 +532,10 @@ namespace MidiStyleExplorer
             ret.AddRange(meta);
             ret.AddRange(patterns);
             ret.AddRange(notes);
-            ret.AddRange(other);
+            if (includeOther)
+            {
+                ret.AddRange(other);
+            }
 
             return ret;
         }

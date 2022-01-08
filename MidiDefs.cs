@@ -27,7 +27,7 @@ namespace MidiStyleExplorer
         public const int DEFAULT_DRUM_CHANNEL = 10;
 
         /// <summary>
-        /// 
+        /// Get patch name.
         /// </summary>
         /// <param name="which"></param>
         /// <returns></returns>
@@ -42,7 +42,7 @@ namespace MidiStyleExplorer
         }
 
         /// <summary>
-        /// 
+        /// Get drum name.
         /// </summary>
         /// <param name="which"></param>
         /// <returns></returns>
@@ -57,7 +57,7 @@ namespace MidiStyleExplorer
         }
 
         /// <summary>
-        /// 
+        /// Get controller name.
         /// </summary>
         /// <param name="which"></param>
         /// <returns></returns>
@@ -84,7 +84,7 @@ namespace MidiStyleExplorer
             return s;
         }
 
-        #region The names
+        #region The Names
         /// <summary>All the root notes.</summary>
         static readonly string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 

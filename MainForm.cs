@@ -15,8 +15,6 @@ using NAudio.Midi;
 
 // FUTURE solo/mute individual drums.
 
-// TODO What are the other style parts? Can I support some?
-
 namespace MidiStyleExplorer
 {
     public partial class MainForm : Form
@@ -307,7 +305,7 @@ namespace MidiStyleExplorer
                 Rewind();
 
                 // Process the file.
-                _mfile = new MidiFile { IgnoreNoisy = true };
+                _mfile = new();
                 _mfile.Read(fn);
                 // All channel numbers.
                 //var channels = _mfile.AllEvents.Select(e => e.Channel).Distinct().OrderBy(e => e);
@@ -317,8 +315,6 @@ namespace MidiStyleExplorer
                 {
                     var pinfo = _mfile.Patterns[0];
                     LoadPattern(pinfo);
-                    //GetPatternEvents(pinfo);
-                    //CreatePatternControls(pinfo);
                 }
                 else // .sty
                 {
@@ -327,7 +323,7 @@ namespace MidiStyleExplorer
                     {
                         switch (p.Name)
                         {
-                            case "SFF1": // patches are in here
+                            case "SFF1": // initial patches are in here
                             case "SFF2":
                             case "SInt":
                                 break;
@@ -346,12 +342,10 @@ namespace MidiStyleExplorer
                     {
                         var pinfo = GetPatternInfo(lbPatterns.Items[0].ToString()!);
                         LoadPattern(pinfo!);
-                        //GetPatternEvents(pinfo!);
-                        //CreatePatternControls(pinfo!);
                     }
                 }
 
-                Text = $"MidiStyleExplorer {MiscUtils.GetVersionString()} - {fn}";
+                Text = $"MidiStyleExplorer {MiscUtils.GetVersionString()} - {fn} File Type:{_mfile.MidiFileType} Tracks:{_mfile.Tracks} PPQ:{_mfile.DeltaTicksPerQuarterNote}";
                 Common.Settings.RecentFiles.UpdateMru(fn);
 
                 Rewind();
@@ -669,8 +663,6 @@ namespace MidiStyleExplorer
         {
             var pinfo = GetPatternInfo(lbPatterns.SelectedItem.ToString()!);
             LoadPattern(pinfo!);
-            //GetPatternEvents(pinfo!);
-            //CreatePatternControls(pinfo!);
 
             Rewind();
             if (btnAutoplay.Checked)
@@ -773,12 +765,14 @@ namespace MidiStyleExplorer
                     Controls.Add(control);
 
                     // Get pattern events.
-                    var events = new ChannelEvents();
-                    var evts = _mfile.AllEvents.Where(e => e.Pattern == pinfo.Name && e.Channel == control.ChannelNumber).OrderBy(e => e.AbsoluteTime);
-                    evts.ForEach(e => events.Add(e.ScaledTime, e.MidiEvent));
-                    lastSubdiv = Math.Max(lastSubdiv, events.MaxSubdiv);
+                    var chEvents = new ChannelEvents();
+                    var evts = _mfile.AllEvents.
+                        Where(e => e.Pattern == pinfo.Name && e.Channel == control.ChannelNumber && (e.MidiEvent is NoteEvent || e.MidiEvent is NoteOnEvent)).
+                        OrderBy(e => e.AbsoluteTime);
+                    evts.ForEach(e => chEvents.Add(e.ScaledTime, e.MidiEvent)); // use internal time
+                    lastSubdiv = Math.Max(lastSubdiv, chEvents.MaxSubdiv);
 
-                    _channels.Add((control, events));
+                    _channels.Add((control, chEvents));
 
                     // Adjust positioning.
                     if (_channels.Count % 8 == 0)

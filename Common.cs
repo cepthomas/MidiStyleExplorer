@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace MidiStyleExplorer
 {
-   /// <summary>Channel state.</summary>
+    #region Types
+    /// <summary>Channel state.</summary>
     public enum PlayState { Normal = 0, Solo = 1, Mute = 2 }
+    #endregion
 
     public class Common
     {
@@ -20,18 +22,10 @@ namespace MidiStyleExplorer
         #endregion
 
         /// <summary>Current global user settings.</summary>
-        public static UserSettings Settings { get; set; } = new UserSettings();
+        public static UserSettings Settings
+        {
+            get;
+            set;
+        } = new UserSettings();
     }
-
-    ///// <summary>Player has something to say or show.</summary>
-    //public class LogEventArgs : EventArgs
-    //{
-    //    public string Category { get; private set; } = "";
-    //    public string Message { get; private set; } = "";
-    //    public LogEventArgs(string cat, string msg)
-    //    {
-    //        Category = cat;
-    //        Message = msg;
-    //    }
-    //}
 }

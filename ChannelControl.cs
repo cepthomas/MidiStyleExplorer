@@ -56,7 +56,7 @@ namespace MidiStyleExplorer
             set { sldVolume.Value = Math.Min(value, 1.0); }
         }
 
-        /// <summary>This is the drum channel.</summary>
+        /// <summary>User has selected this channel.</summary>
         public bool Selected
         {
             get { return _selected; }
