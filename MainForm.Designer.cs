@@ -163,7 +163,7 @@
             this.txtViewer.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtViewer.MaxText = 5000;
             this.txtViewer.Name = "txtViewer";
-            this.txtViewer.Size = new System.Drawing.Size(956, 92);
+            this.txtViewer.Size = new System.Drawing.Size(956, 81);
             this.txtViewer.TabIndex = 58;
             this.txtViewer.Text = "";
             // 

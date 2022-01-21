@@ -63,8 +63,8 @@ namespace MidiStyleExplorer
             Icon = Properties.Resources.Morso;
 
             // Init main form from settings
-            Location = new Point(Common.Settings.MainFormInfo.X, Common.Settings.MainFormInfo.Y);
-            Size = new Size(Common.Settings.MainFormInfo.Width, Common.Settings.MainFormInfo.Height);
+            Location = new Point(Common.Settings.FormGeometry.X, Common.Settings.FormGeometry.Y);
+            Size = new Size(Common.Settings.FormGeometry.Width, Common.Settings.FormGeometry.Height);
             WindowState = FormWindowState.Normal;
             KeyPreview = true; // for routing kbd strokes through MainForm_KeyDown
             Text = $"Clip Explorer {MiscUtils.GetVersionString()} - No file loaded";
@@ -154,7 +154,7 @@ namespace MidiStyleExplorer
         void SaveSettings()
         {
             Common.Settings.Volume = sldVolume.Value;
-            Common.Settings.MainFormInfo = new Rectangle(Location.X, Location.Y, Width, Height);
+            Common.Settings.FormGeometry = new Rectangle(Location.X, Location.Y, Width, Height);
             Common.Settings.Autoplay = btnAutoplay.Checked;
             Common.Settings.Loop = btnLoop.Checked;
 

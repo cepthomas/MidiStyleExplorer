@@ -9,9 +9,9 @@ using System.ComponentModel.Design;
 using System.Windows.Forms.Design;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using NBagOfTricks;
 using NAudio.Wave;
 using NAudio.Midi;
+using NBagOfTricks;
 using NBagOfUis;
 
 
@@ -64,7 +64,8 @@ namespace MidiStyleExplorer
         public bool Valid { get; set; } = false;
 
         [Browsable(false)]
-        public Rectangle MainFormInfo { get; set; } = new Rectangle(50, 50, 500, 400);
+        [JsonConverter(typeof(JsonRectangleConverter))]
+        public Rectangle FormGeometry { get; set; } = new Rectangle(50, 50, 600, 400);
 
         [Browsable(false)]
         public double Volume { get; set; } = 0.5;
