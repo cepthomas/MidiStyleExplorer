@@ -47,6 +47,12 @@ namespace MidiStyleExplorer
         [Browsable(true)]
         public bool DumpToClip { get; set; } = false;
 
+        [DisplayName("Export Path")]
+        [Description("Where To Export.")]
+        [Browsable(true)]
+        [Editor(typeof(FolderNameEditor), typeof(UITypeEditor))]
+        public string ExportPath { get; set; } = "";
+
         [DisplayName("Snap To Grid")]
         [Description("Snap to bar | beat | subdiv.")]
         [Browsable(true)]

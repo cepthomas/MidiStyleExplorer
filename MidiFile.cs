@@ -13,7 +13,6 @@ namespace MidiStyleExplorer
 {
     /// <summary>
     /// Reads in and processes standard midi or yamaha style files. Timestamps are from original file.
-    /// FUTURE Doesn't support multiple tracks. Would it be useful?
     /// </summary>
     public class MidiFile
     {
@@ -305,7 +304,7 @@ namespace MidiStyleExplorer
                 }
             }
 
-            ///// Local functiond. /////
+            ///// Local function. /////
             void AddMidiEvent(MidiEvent evt)
             {
                 int scaledTime = mt.MidiToInternal(evt.AbsoluteTime);

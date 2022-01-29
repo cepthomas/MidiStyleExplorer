@@ -13,7 +13,6 @@ using NBagOfTricks;
 using NBagOfUis;
 using NAudio.Midi;
 
-// FUTURE solo/mute individual drums.
 
 namespace MidiStyleExplorer
 {
@@ -275,7 +274,7 @@ namespace MidiStyleExplorer
         /// </summary>
         void Open_Click(object? sender, EventArgs e)
         {
-            string sext = "Clip Files | *.mid;*.sty";
+            string sext = "Style Files|*.sty;*.pcs;*.sst;.prs|Midi Files|*.mid;*";
 
             using OpenFileDialog openDlg = new()
             {
@@ -302,6 +301,7 @@ namespace MidiStyleExplorer
 
             try
             {
+                Stop();
                 Rewind();
 
                 // Process the file.
@@ -311,6 +311,7 @@ namespace MidiStyleExplorer
                 //var channels = _mfile.AllEvents.Select(e => e.Channel).Distinct().OrderBy(e => e);
 
                 // Init new stuff with contents of file/pattern.
+                lbPatterns.Items.Clear();
                 if (_mfile.Filename.ToLower().EndsWith(".mid"))
                 {
                     var pinfo = _mfile.Patterns[0];
@@ -318,7 +319,6 @@ namespace MidiStyleExplorer
                 }
                 else // .sty
                 {
-                    lbPatterns.Items.Clear();
                     foreach (var p in _mfile.Patterns)
                     {
                         switch (p.Name)
@@ -347,6 +347,7 @@ namespace MidiStyleExplorer
                 Text = $"MidiStyleExplorer {MiscUtils.GetVersionString()} - {fn} File Type:{_mfile.MidiFileType} Tracks:{_mfile.Tracks} PPQ:{_mfile.DeltaTicksPerQuarterNote}";
                 Common.Settings.RecentFiles.UpdateMru(fn);
 
+                Stop();
                 Rewind();
                 if (btnAutoplay.Checked)
                 {
@@ -419,9 +420,12 @@ namespace MidiStyleExplorer
         /// <param name="on"></param>
         void SetPlayCheck(bool on)
         {
-            chkPlay.CheckedChanged -= Play_CheckedChanged;
-            chkPlay.Checked = on;
-            chkPlay.CheckedChanged += Play_CheckedChanged;
+            this.InvokeIfRequired(_ =>
+            {
+                chkPlay.CheckedChanged -= Play_CheckedChanged;
+                chkPlay.Checked = on;
+                chkPlay.CheckedChanged += Play_CheckedChanged;
+            });
         }
 
         /// <summary>
@@ -484,7 +488,7 @@ namespace MidiStyleExplorer
         {
             this.InvokeIfRequired(_ =>
             {
-                Stop();
+                //Stop();
                 barBar.Current = BarSpan.Zero;
             });
         }
@@ -564,6 +568,7 @@ namespace MidiStyleExplorer
                     else
                     {
                         _running = false;
+                        Stop();
                         Rewind();
                     }
                 }
@@ -663,6 +668,7 @@ namespace MidiStyleExplorer
             var pinfo = GetPatternInfo(lbPatterns.SelectedItem.ToString()!);
             LoadPattern(pinfo!);
 
+            Stop();
             Rewind();
             if (btnAutoplay.Checked)
             {
@@ -775,16 +781,6 @@ namespace MidiStyleExplorer
                     _channels.Add((control, chEvents));
 
                     // Adjust positioning.
-                    //if (_channels.Count % 8 == 0)
-                    //{
-                    //    // new columnn
-                    //    x = control.Right + 5;
-                    //    y = lbPatterns.Top;
-                    //}
-                    //else
-                    //{
-                    //    y += control.Height + 5;
-                    //}
                     y += control.Height + 5;
 
                     // Send real patches.
@@ -809,7 +805,7 @@ namespace MidiStyleExplorer
 
         #region Utilities
         /// <summary>
-        /// Dump current file.
+        /// Dump current file to human readable.
         /// </summary>
         void Dump_Click(object? sender, EventArgs e)
         {
@@ -844,49 +840,54 @@ namespace MidiStyleExplorer
         /// <param name="e"></param>
         void Export_Click(object? sender, EventArgs e)
         {
-            string dir = Path.GetDirectoryName(_mfile.Filename)!;
-            string newfn = Path.GetFileNameWithoutExtension(_mfile.Filename);
-            string pattern;
-            string info;
+            if(Directory.Exists(Common.Settings.ExportPath))
+            {
+                string basefn = Path.GetFileNameWithoutExtension(_mfile.Filename);
 
-            if (_mfile.Filename.EndsWith(".sty"))
-            {
-                pattern = lbPatterns.SelectedItem.ToString()!.Replace(' ', '_');
-                newfn = $"{newfn}_{pattern}.mid";
-                info = $"Export {pattern} from {_mfile.Filename}";
-            }
-            else // .mid
-            {
-                pattern = "";
-                newfn = $"{newfn}_export.mid";
-                info = $"Export from {_mfile.Filename}";
-            }
+                if (_mfile.Filename.EndsWith(".sty"))
+                {
+                    foreach (var item in lbPatterns.Items)
+                    {
+                        var pattern = item.ToString()!;
+                        var newfn = Path.Join(Common.Settings.ExportPath, $"{basefn}_{pattern.Replace(' ', '_')}.mid");
+                        var info = $"Export {pattern} from {_mfile.Filename}";
 
-            using SaveFileDialog dumpDlg = new() { Title = "Export midi", FileName = newfn, InitialDirectory = dir };
-            if (dumpDlg.ShowDialog() == DialogResult.OK)
+                        ExportMidi(newfn, pattern, info);
+                    }
+                    LogMessage("INF", $"Style file {_mfile.Filename} exported to {Common.Settings.ExportPath}");
+                }
+                else // .mid
+                {
+                    var newfn = Path.Join(Common.Settings.ExportPath, $"{basefn}_export.mid");
+                    var info = $"Export {_mfile.Filename}";
+
+                    ExportMidi(newfn, "", info);
+                }
+                LogMessage("INF", $"Midi file {_mfile.Filename} exported to {Common.Settings.ExportPath}");
+            }
+            else
             {
-                ExportMidi(newfn, pattern, info);
+                LogMessage("ERR", "Invalid export path in your settings");
             }
         }
 
         /// <summary>
-        /// Output part or all of the file to a new midi file.
-        /// TODO probably find a new home with more editing features. Select channels to export. Honor volumes - or autoscale to max out?
+        /// Output part of the file to a new midi file.
         /// </summary>
         /// <param name="fn">Where to put the midi.</param>
         /// <param name="pattern">Specific pattern if a style file.</param>
         /// <param name="info">Extra info to add to midi file.</param>
-        void ExportMidi(string fn, string pattern, string info) 
+        void ExportMidi(string fn, string pattern, string info)  // TODO add start/end range
         {
-            // Get pattern info. This should work for the simple midi file case too.
+            // Get pattern info.
             PatternInfo pinfo = _mfile.Patterns.First(p => p.Name == pattern);
 
             // Init output file contents.
-            MidiEventCollection outColl = new(1, _mfile.DeltaTicksPerQuarterNote);
+            MidiEventCollection outColl = new(1, Common.PPQ);
             IList<MidiEvent> outEvents = outColl.AddTrack();
             
             // Tempo.
-            outEvents.Add(new TempoEvent(0, 0) { Tempo = pinfo.Tempo });
+            outEvents.Add(new TempoEvent(0, 0) { Tempo = sldTempo.Value });
 
             // General info.
             outEvents.Add(new TextEvent(info, MetaEventType.TextEvent, 0));
@@ -916,6 +917,7 @@ namespace MidiStyleExplorer
             {
                 events.MidiEvents.ForEach(kv =>
                 {
+                    // TODO adjust velocity for noteon based on slider values?
                     kv.Value.ForEach(e =>
                     {
                         e.AbsoluteTime = kv.Key;
@@ -943,7 +945,7 @@ namespace MidiStyleExplorer
             });
 
             // End track.
-            long ltime = allEvts.Last().AbsoluteTime;
+            long ltime = outEvents.Last().AbsoluteTime;
             var endt = new MetaEvent(MetaEventType.EndTrack, 0, ltime);
             outEvents.Add(endt);
 
