@@ -36,6 +36,7 @@
             this.sldTempo = new NBagOfUis.Slider();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.lbPatterns = new System.Windows.Forms.ListBox();
+            this.ftree = new NBagOfUis.FilTree();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -54,7 +55,7 @@
             this.btnKillMidi});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(998, 27);
+            this.toolStrip1.Size = new System.Drawing.Size(1110, 27);
             this.toolStrip1.TabIndex = 0;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -154,16 +155,15 @@
             // 
             // txtViewer
             // 
-            this.txtViewer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtViewer.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
             this.txtViewer.BackColor = System.Drawing.Color.Snow;
             this.txtViewer.Font = new System.Drawing.Font("Lucida Console", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.txtViewer.Location = new System.Drawing.Point(20, 551);
+            this.txtViewer.Location = new System.Drawing.Point(8, 577);
             this.txtViewer.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtViewer.MaxText = 5000;
             this.txtViewer.Name = "txtViewer";
-            this.txtViewer.Size = new System.Drawing.Size(956, 81);
+            this.txtViewer.Size = new System.Drawing.Size(648, 128);
             this.txtViewer.TabIndex = 58;
             this.txtViewer.Text = "";
             // 
@@ -173,7 +173,7 @@
             this.sldVolume.DecPlaces = 1;
             this.sldVolume.DrawColor = System.Drawing.Color.Fuchsia;
             this.sldVolume.Label = "vol";
-            this.sldVolume.Location = new System.Drawing.Point(20, 105);
+            this.sldVolume.Location = new System.Drawing.Point(558, 103);
             this.sldVolume.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.sldVolume.Maximum = 2D;
             this.sldVolume.Minimum = 0D;
@@ -188,7 +188,7 @@
             // 
             this.btnRewind.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnRewind.Image = global::MidiStyleExplorer.Properties.Resources.glyphicons_173_rewind;
-            this.btnRewind.Location = new System.Drawing.Point(71, 43);
+            this.btnRewind.Location = new System.Drawing.Point(613, 41);
             this.btnRewind.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.btnRewind.Name = "btnRewind";
             this.btnRewind.Size = new System.Drawing.Size(43, 49);
@@ -202,7 +202,7 @@
             this.chkPlay.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(128)))));
             this.chkPlay.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.chkPlay.Image = global::MidiStyleExplorer.Properties.Resources.glyphicons_174_play;
-            this.chkPlay.Location = new System.Drawing.Point(20, 43);
+            this.chkPlay.Location = new System.Drawing.Point(558, 41);
             this.chkPlay.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.chkPlay.Name = "chkPlay";
             this.chkPlay.Size = new System.Drawing.Size(43, 49);
@@ -216,7 +216,7 @@
             this.barBar.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.barBar.FontLarge = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.barBar.FontSmall = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.barBar.Location = new System.Drawing.Point(131, 42);
+            this.barBar.Location = new System.Drawing.Point(669, 40);
             this.barBar.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.barBar.MarkerColor = System.Drawing.Color.Black;
             this.barBar.Name = "barBar";
@@ -233,7 +233,7 @@
             this.sldTempo.DecPlaces = 0;
             this.sldTempo.DrawColor = System.Drawing.Color.White;
             this.sldTempo.Label = "BPM";
-            this.sldTempo.Location = new System.Drawing.Point(20, 156);
+            this.sldTempo.Location = new System.Drawing.Point(558, 154);
             this.sldTempo.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.sldTempo.Maximum = 200D;
             this.sldTempo.Minimum = 50D;
@@ -252,7 +252,7 @@
             this.lbPatterns.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lbPatterns.FormattingEnabled = true;
             this.lbPatterns.ItemHeight = 20;
-            this.lbPatterns.Location = new System.Drawing.Point(20, 204);
+            this.lbPatterns.Location = new System.Drawing.Point(558, 202);
             this.lbPatterns.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.lbPatterns.Name = "lbPatterns";
             this.lbPatterns.Size = new System.Drawing.Size(98, 342);
@@ -260,11 +260,22 @@
             this.toolTip.SetToolTip(this.lbPatterns, "All patterns in style file");
             this.lbPatterns.SelectedIndexChanged += new System.EventHandler(this.Patterns_SelectedIndexChanged);
             // 
+            // ftree
+            // 
+            this.ftree.DoubleClickSelect = false;
+            this.ftree.Location = new System.Drawing.Point(8, 32);
+            this.ftree.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
+            this.ftree.Name = "ftree";
+            this.ftree.Size = new System.Drawing.Size(527, 536);
+            this.ftree.FileSelectedEvent += new System.EventHandler<string>(this.Navigator_FileSelectedEvent);
+            this.ftree.TabIndex = 89;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(998, 656);
+            this.ClientSize = new System.Drawing.Size(1110, 709);
+            this.Controls.Add(this.ftree);
             this.Controls.Add(this.barBar);
             this.Controls.Add(this.sldTempo);
             this.Controls.Add(this.lbPatterns);
@@ -275,7 +286,7 @@
             this.Controls.Add(this.btnRewind);
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "MainForm";
-            this.Text = "Clip Explorer";
+            this.Text = "Midi Style Explorer";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyDown);
@@ -306,6 +317,7 @@
         private System.Windows.Forms.ToolStripButton btnDrumsOn1;
         private System.Windows.Forms.ToolStripButton btnLogMidi;
         private System.Windows.Forms.ToolStripButton btnKillMidi;
+        private NBagOfUis.FilTree ftree;
     }
 }
 

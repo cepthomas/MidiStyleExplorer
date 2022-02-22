@@ -1037,6 +1037,9 @@
         <member name="T:NBagOfUis.PropertyGridEx">
             <summary>Extends the PropertyGrid to add some features.</summary>
         </member>
+        <member name="P:NBagOfUis.PropertyGridEx.Dirty">
+            <summary>Edited flag.</summary>
+        </member>
         <member name="E:NBagOfUis.PropertyGridEx.PropertyGridExEvent">
             <summary>The property grid is reporting something.</summary>
         </member>
@@ -1052,47 +1055,45 @@
         <member name="M:NBagOfUis.PropertyGridEx.RaisePropertyGridExEvent(System.String,System.Object)">
             <summary>Children can call this to send something back to the host.</summary>
         </member>
-        <member name="P:NBagOfUis.PropertyGridEx.ToolStrip">
-            <summary>Gets the tool strip.</summary>
-        </member>
-        <member name="P:NBagOfUis.PropertyGridEx.DocComment">
-            <summary>Gets the doc comment.</summary>
-        </member>
-        <member name="P:NBagOfUis.PropertyGridEx.DocCommentTitle">
-            <summary>Gets the doc comment title.</summary>
-        </member>
-        <member name="P:NBagOfUis.PropertyGridEx.DocCommentDescription">
-            <summary>Gets the doc comment description.</summary>
-        </member>
-        <member name="P:NBagOfUis.PropertyGridEx.DocCommentImage">
-            <summary>Gets or sets the help comment image.</summary>
-        </member>
-        <member name="P:NBagOfUis.PropertyGridEx.Dirty">
-            <summary>Edited flag.</summary>
-        </member>
         <member name="M:NBagOfUis.PropertyGridEx.#ctor">
             <summary>Initializes a new instance of the class.</summary>
         </member>
-        <member name="M:NBagOfUis.PropertyGridEx.Edit_PropertyValueChanged(System.Object,System.Windows.Forms.PropertyValueChangedEventArgs)">
-            <summary>User edited something.</summary>
-        </member>
         <member name="M:NBagOfUis.PropertyGridEx.AddButton(System.String,System.Drawing.Image,System.String,System.EventHandler)">
             <summary>Add a custom button to the property grid.</summary>
+            <param name="text"></param>
+            <param name="image"></param>
+            <param name="tooltip"></param>
+            <param name="onClick"></param>
+            <returns>The button or null if failed.</returns>
         </member>
         <member name="M:NBagOfUis.PropertyGridEx.AddLabel(System.String,System.Drawing.Image,System.String)">
             <summary>Add a label to the property grid.</summary>
+            <param name="text"></param>
+            <param name="image"></param>
+            <param name="tooltip"></param>
+            <returns>The label or null if failed.</returns>
+        </member>
+        <member name="M:NBagOfUis.PropertyGridEx.AddSeparator">
+            <summary>Add a separator to the property grid.</summary>
+            <returns>The separator or null if failed.</returns>
         </member>
         <member name="M:NBagOfUis.PropertyGridEx.MoveSplitter(System.Int32)">
             <summary>Moves the vertical splitter.</summary>
+            <param name="x"></param>
         </member>
         <member name="M:NBagOfUis.PropertyGridEx.ResizeDescriptionArea(System.Int32)">
             <summary>Alter the bottom description area.</summary>
+            <param name="x">Number of lines to show.</param>
         </member>
         <member name="M:NBagOfUis.PropertyGridEx.ExpandGroup(System.String,System.Boolean)">
             <summary>Expand or collapse the group.</summary>
+            <param name="groupName">Name of the group to act on.</param>
+            <param name="expand">Expand or collapse.</param>
         </member>
         <member name="M:NBagOfUis.PropertyGridEx.ShowProperty(System.String,System.Boolean)">
             <summary>Show or hide a named property.</summary>
+            <param name="which">Name of the property.</param>
+            <param name="visible">True or false.</param>
         </member>
         <member name="T:NBagOfUis.Slider">
             <summary>
@@ -1496,7 +1497,7 @@
         <member name="P:NBagOfUis.VirtualKey.NoteId">
             <summary>Associated midi note.</summary>
         </member>
-        <member name="E:NBagOfUis.VirtualKey.VKeyEvent">
+        <member name="T:NBagOfUis.VirtualKey.VKeyEventArgs">
             <summary>Notify handlers of key change.</summary>
         </member>
         <member name="M:NBagOfUis.VirtualKey.#ctor(NBagOfUis.VirtualKeyboard,System.Boolean,System.Int32)">
@@ -1566,9 +1567,6 @@
         <member name="F:NBagOfUis.WaitCursor.m_cursorOld">
             <summary>Restore original cursor</summary>
         </member>
-        <member name="F:NBagOfUis.WaitCursor._disposedValue">
-            <summary>To detect redundant call</summary>
-        </member>
         <member name="F:NBagOfUis.WaitCursor._start">
             <summary>For metrics</summary>
         </member>
@@ -1577,10 +1575,6 @@
         </member>
         <member name="M:NBagOfUis.WaitCursor.Dispose">
             <summary>Dispose</summary>
-        </member>
-        <member name="M:NBagOfUis.WaitCursor.Dispose(System.Boolean)">
-            <summary>Dispose</summary>
-            <param name="disposing"></param>
         </member>
         <member name="F:NBagOfUis.WaveViewer._rawVals">
             <summary>From client.</summary>

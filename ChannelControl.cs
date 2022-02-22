@@ -29,7 +29,7 @@ namespace MidiStyleExplorer
         public int ChannelNumber
         {
             get { return _channelNumber; }
-            set { _channelNumber = value; lblChannelNumber.Text = $"Ch:{_channelNumber}"; }
+            set { _channelNumber = value; lblChannelNumber.Text = $"{_channelNumber}:"; }
         }
         int _channelNumber = -1;
 

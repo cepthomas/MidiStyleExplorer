@@ -36,6 +36,9 @@ namespace MidiStyleExplorer
 
         /// <summary>All the channel controls and data for current pattern.</summary>
         readonly List<(ChannelControl control, ChannelEvents events)> _channels = new();
+
+        /// <summary>Supported file types in OpenFileDialog form.</summary>
+        readonly string _fileTypes = "Style Files|*.sty;*.pcs;*.sst;*.prs|Midi Files|*.mid";
         #endregion
 
         #region Lifecycle
@@ -91,6 +94,22 @@ namespace MidiStyleExplorer
             barBar.ProgressColor = Common.Settings.ControlColor;
             barBar.CurrentTimeChanged += BarBar_CurrentTimeChanged;
 
+            // Initialize tree from user settings.
+            ftree.FilterExts = _fileTypes.SplitByTokens("|;*").Where(s => s.StartsWith(".")).ToList();
+            ftree.RootDirs = Common.Settings.RootDirs;
+            ftree.AllTags = Common.Settings.AllTags;
+            ftree.TaggedPaths = Common.Settings.TaggedPaths;
+            // ftree.DoubleClickSelect = !Common.Settings.Autoplay;
+
+            try
+            {
+                ftree.Init();
+            }
+            catch (DirectoryNotFoundException)
+            {
+                LogMessage("WRN", "No tree directories");
+            }
+
             // Figure out the midi output device.
             for (int devindex = 0; devindex < MidiOut.NumberOfDevices; devindex++)
             {
@@ -137,7 +156,7 @@ namespace MidiStyleExplorer
             _mmTimer.Stop();
             _mmTimer.Dispose();
 
-            if (disposing && (components != null))
+            if (disposing && (components is not null))
             {
                 components.Dispose();
             }
@@ -156,6 +175,10 @@ namespace MidiStyleExplorer
             Common.Settings.FormGeometry = new Rectangle(Location.X, Location.Y, Width, Height);
             Common.Settings.Autoplay = btnAutoplay.Checked;
             Common.Settings.Loop = btnLoop.Checked;
+
+            Common.Settings.AllTags = ftree.AllTags;
+            Common.Settings.TaggedPaths = ftree.TaggedPaths;
+// Common.Settings.Autoplay = !ftree.DoubleClickSelect;
 
             Common.Settings.Save();
         }
@@ -176,7 +199,7 @@ namespace MidiStyleExplorer
                 ShowInTaskbar = false
             };
 
-            PropertyGrid pg = new()
+            PropertyGridEx pg = new()
             {
                 Dock = DockStyle.Fill,
                 PropertySort = PropertySort.Categorized,
@@ -236,6 +259,17 @@ namespace MidiStyleExplorer
 
         #region File handling
         /// <summary>
+        /// Tree has seleccted a file to play.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="fn"></param>
+        void Navigator_FileSelectedEvent(object? sender, string fn)
+        {
+            OpenFile(fn);
+            //_fn = fn;
+        }
+
+        /// <summary>
         /// Organize the file menu item drop down.
         /// </summary>
         /// <param name="sender"></param>
@@ -274,11 +308,9 @@ namespace MidiStyleExplorer
         /// </summary>
         void Open_Click(object? sender, EventArgs e)
         {
-            string sext = "Style Files|*.sty;*.pcs;*.sst;.prs|Midi Files|*.mid;*";
-
             using OpenFileDialog openDlg = new()
             {
-                Filter = sext,
+                Filter = _fileTypes,
                 Title = "Select a file"
             };
 
@@ -846,7 +878,7 @@ namespace MidiStyleExplorer
 
                 if (_mfile.Filename.EndsWith(".sty"))
                 {
-                    foreach (var item in lbPatterns.Items)
+                    foreach (var item in lbPatterns.Items) // TODO only selected channels or all if none selected.
                     {
                         var pattern = item.ToString()!;
                         var newfn = Path.Join(Common.Settings.ExportPath, $"{basefn}_{pattern.Replace(' ', '_')}.mid");
@@ -877,7 +909,7 @@ namespace MidiStyleExplorer
         /// <param name="fn">Where to put the midi.</param>
         /// <param name="pattern">Specific pattern if a style file.</param>
         /// <param name="info">Extra info to add to midi file.</param>
-        void ExportMidi(string fn, string pattern, string info)  // TODO add start/end range
+        void ExportMidi(string fn, string pattern, string info)  // TODO add start/end range?
         {
             // Get pattern info.
             PatternInfo pinfo = _mfile.Patterns.First(p => p.Name == pattern);
@@ -917,7 +949,7 @@ namespace MidiStyleExplorer
             {
                 events.MidiEvents.ForEach(kv =>
                 {
-                    // TODO adjust velocity for noteon based on slider values?
+                    // TODO adjust velocity for noteon based on slider values? or normalize?
                     kv.Value.ForEach(e =>
                     {
                         e.AbsoluteTime = kv.Key;

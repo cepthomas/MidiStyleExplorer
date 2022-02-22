@@ -21,6 +21,12 @@ namespace MidiStyleExplorer
     public class UserSettings
     {
         #region Persisted editable properties
+        [DisplayName("Root Directories")]
+        [Description("Where to look in order as they appear.")]
+        [Browsable(true)]
+        [Editor(typeof(ListEditor), typeof(UITypeEditor))] // Should be a proper folder picker.
+        public List<string> RootDirs { get; set; } = new();
+
         [DisplayName("Midi Output Device")]
         [Description("How to play the midi files.")]
         [Browsable(true)]
@@ -78,6 +84,12 @@ namespace MidiStyleExplorer
 
         [Browsable(false)]
         public List<string> RecentFiles { get; set; } = new List<string>();
+
+        [Browsable(false)]
+        public Dictionary<string, bool> AllTags { get; set; } = new Dictionary<string, bool>();
+
+        [Browsable(false)]
+        public Dictionary<string, string> TaggedPaths { get; set; } = new Dictionary<string, string>();
         #endregion
 
         #region Fields
