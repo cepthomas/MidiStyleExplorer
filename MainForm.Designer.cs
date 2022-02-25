@@ -194,7 +194,6 @@
             this.btnRewind.Size = new System.Drawing.Size(43, 49);
             this.btnRewind.TabIndex = 39;
             this.btnRewind.UseVisualStyleBackColor = false;
-            this.btnRewind.Click += new System.EventHandler(this.Rewind_Click);
             // 
             // chkPlay
             // 
@@ -208,7 +207,6 @@
             this.chkPlay.Size = new System.Drawing.Size(43, 49);
             this.chkPlay.TabIndex = 41;
             this.chkPlay.UseVisualStyleBackColor = false;
-            this.chkPlay.CheckedChanged += new System.EventHandler(this.Play_CheckedChanged);
             // 
             // barBar
             // 
@@ -262,7 +260,7 @@
             // 
             // ftree
             // 
-            this.ftree.DoubleClickSelect = false;
+            this.ftree.SingleClickSelect = true;
             this.ftree.Location = new System.Drawing.Point(8, 32);
             this.ftree.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
             this.ftree.Name = "ftree";

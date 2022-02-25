@@ -423,20 +423,9 @@
         </member>
         <member name="T:NBagOfUis.FilTree">
             <summary>
-            Tree control with tags and filters.
+            Tree control with file type filters.
+            TODO: limit/lazy L/R population, filter pattern matching, include/exclude, filter specs global/local.
             </summary>
-        </member>
-        <member name="F:NBagOfUis.FilTree._taggedPaths">
-            <summary>Key is file or dir path, value is associated tags.</summary>
-        </member>
-        <member name="F:NBagOfUis.FilTree._activeFilters">
-            <summary>Filter by these tags.</summary>
-        </member>
-        <member name="P:NBagOfUis.FilTree.TaggedPaths">
-            <summary>Key is path to file or directory, value is space separated associated tags.</summary>
-        </member>
-        <member name="P:NBagOfUis.FilTree.AllTags">
-            <summary>All possible tags and whether they are active.</summary>
         </member>
         <member name="P:NBagOfUis.FilTree.RootDirs">
             <summary>Base path(s) for the tree.</summary>
@@ -444,7 +433,7 @@
         <member name="P:NBagOfUis.FilTree.FilterExts">
             <summary>Show only these file types.</summary>
         </member>
-        <member name="P:NBagOfUis.FilTree.DoubleClickSelect">
+        <member name="P:NBagOfUis.FilTree.SingleClickSelect">
             <summary>Generate event with single or double click.</summary>
         </member>
         <member name="E:NBagOfUis.FilTree.FileSelectedEvent">
@@ -476,7 +465,7 @@
         </member>
         <member name="M:NBagOfUis.FilTree.PopulateTreeView">
             <summary>
-            
+            Fill the tree.
             </summary>
         </member>
         <member name="M:NBagOfUis.FilTree.ShowDirectories(System.IO.DirectoryInfo[],System.Windows.Forms.TreeNode)">
@@ -521,18 +510,6 @@
             <param name="sender"></param>
             <param name="e"></param>
         </member>
-        <member name="M:NBagOfUis.FilTree.PopulateFilters">
-            <summary>
-            Update the clickable label showing active filters.
-            </summary>
-        </member>
-        <member name="M:NBagOfUis.FilTree.ActiveFilters_Click(System.Object,System.EventArgs)">
-            <summary>
-            Edit the tag filters for this file.
-            </summary>
-            <param name="sender"></param>
-            <param name="e"></param>
-        </member>
         <member name="M:NBagOfUis.FilTree.TreeView_DrawNode(System.Object,System.Windows.Forms.DrawTreeNodeEventArgs)">
             <summary>
             See above.
@@ -546,18 +523,6 @@
             </summary>
             <param name="sender"></param>
             <param name="e"></param>
-        </member>
-        <member name="M:NBagOfUis.FilTree.GetTaggedPaths">
-            <summary>
-            Property accessor helper.
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:NBagOfUis.FilTree.SetTaggedPaths(System.Collections.Generic.Dictionary{System.String,System.String})">
-            <summary>
-            Property accessor helper.
-            </summary>
-            <param name="paths"></param>
         </member>
         <member name="F:NBagOfUis.FilTree.components">
             <summary> 
@@ -1359,13 +1324,17 @@
             <param name="val"></param>
             <returns></returns>
         </member>
+        <member name="T:NBagOfUis.StringListEditor">
+            <summary>Generic property editor for lists of strings.</summary>
+        </member>
+        <member name="T:NBagOfUis.MonospaceFontEditor">
+            <summary>Selector for monospaced fonts.</summary>
+        </member>
         <member name="T:NBagOfUis.CheckBoxRenderer">
             <summary>Custom renderer for toolstrip checkbox color.</summary>
         </member>
         <member name="P:NBagOfUis.CheckBoxRenderer.SelectedColor">
-            <summary>
-            Color to use when check box is selected.
-            </summary>
+            <summary>Color to use when check box is selected.</summary>
         </member>
         <member name="M:NBagOfUis.CheckBoxRenderer.OnRenderButtonBackground(System.Windows.Forms.ToolStripItemRenderEventArgs)">
             <summary>
@@ -1373,14 +1342,22 @@
             </summary>
             <param name="e"></param>
         </member>
-        <member name="T:NBagOfUis.TsRenderer">
-            <summary>Toolstrip checkbox button colorizer.</summary>
+        <member name="F:NBagOfUis.UserControl1.components">
+            <summary> 
+            Required designer variable.
+            </summary>
         </member>
-        <member name="T:NBagOfUis.ListEditor">
-            <summary>Generic property editor for lists of strings.</summary>
+        <member name="M:NBagOfUis.UserControl1.Dispose(System.Boolean)">
+            <summary> 
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         </member>
-        <member name="T:NBagOfUis.MonospaceFontEditor">
-            <summary>Selector for monospaced fonts.</summary>
+        <member name="M:NBagOfUis.UserControl1.InitializeComponent">
+            <summary> 
+            Required method for Designer support - do not modify 
+            the contents of this method with the code editor.
+            </summary>
         </member>
         <member name="T:NBagOfUis.VirtualKeyboard">
             <summary>

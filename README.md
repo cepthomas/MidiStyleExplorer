@@ -1,6 +1,8 @@
 # Midi Style Explorer
 A windows tool for opening, playing, and manipulating midi and Yamaha style files.
 
+Requires VS2019 and .NET5.
+
 # Usage
 - Opens style files and plays the individual sections.
 - Export style files as their component parts.

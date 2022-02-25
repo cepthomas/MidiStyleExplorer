@@ -25,9 +25,6 @@ namespace MidiStyleExplorer
         /// <summary>The fast timer.</summary>
         readonly MmTimerEx _mmTimer = new();
 
-        /// <summary>Indicates whether or not the midi is playing.</summary>
-        bool _running = false;
-
         /// <summary>Midi events from the input file.</summary>
         MidiFile _mfile = new();
 
@@ -47,14 +44,7 @@ namespace MidiStyleExplorer
         /// </summary>
         public MainForm()
         {
-            // Need to load settings before creating controls in MainForm_Load().
-            string appDir = MiscUtils.GetAppDataDir("MidiStyleExplorer", "Ephemera");
-            DirectoryInfo di = new(appDir);
-            di.Create();
-            Common.Settings = UserSettings.Load(appDir);
-
             InitializeComponent();
-            toolStrip1.Renderer = new TsRenderer() { SelectedColor = Common.Settings.ControlColor };
         }
 
         /// <summary>
@@ -63,6 +53,14 @@ namespace MidiStyleExplorer
         void MainForm_Load(object? sender, EventArgs e)
         {
             Icon = Properties.Resources.Morso;
+
+            // Get settings.
+            string appDir = MiscUtils.GetAppDataDir("MidiStyleExplorer", "Ephemera");
+            DirectoryInfo di = new(appDir);
+            di.Create();
+            Common.Settings = UserSettings.Load(appDir);
+
+            toolStrip1.Renderer = new NBagOfUis.CheckBoxRenderer() { SelectedColor = Common.Settings.ControlColor };
 
             // Init main form from settings
             Location = new Point(Common.Settings.FormGeometry.X, Common.Settings.FormGeometry.Y);
@@ -97,9 +95,7 @@ namespace MidiStyleExplorer
             // Initialize tree from user settings.
             ftree.FilterExts = _fileTypes.SplitByTokens("|;*").Where(s => s.StartsWith(".")).ToList();
             ftree.RootDirs = Common.Settings.RootDirs;
-            ftree.AllTags = Common.Settings.AllTags;
-            ftree.TaggedPaths = Common.Settings.TaggedPaths;
-            // ftree.DoubleClickSelect = !Common.Settings.Autoplay;
+            ftree.SingleClickSelect = true; // not !Common.Settings.Autoplay;
 
             try
             {
@@ -126,6 +122,13 @@ namespace MidiStyleExplorer
 
             LogMessage("INF", "C to clear, W to wrap");
 
+            // Hook up UI handlers.
+            chkPlay.CheckedChanged += (_, __) => { _ = chkPlay.Checked ? Play() : Stop(); };
+            btnRewind.Click += (_, __) => { Rewind(); };
+            btnDrumsOn1.CheckedChanged += (_, __) => {
+                _drumChannel = btnDrumsOn1.Checked ? 1 : MidiDefs.DEFAULT_DRUM_CHANNEL;
+                _channels.ForEach(ch => ch.control.IsDrums = ch.control.ChannelNumber == _drumChannel); };
+
             // Look for filename passed in.
             string[] args = Environment.GetCommandLineArgs();
             if (args.Length > 1)
@@ -139,7 +142,7 @@ namespace MidiStyleExplorer
         /// </summary>
         void MainForm_FormClosing(object? sender, FormClosingEventArgs e)
         {
-            Stop();
+            chkPlay.Checked = false; // ==> stop
             SaveSettings();
         }
 
@@ -171,15 +174,10 @@ namespace MidiStyleExplorer
         /// </summary>
         void SaveSettings()
         {
-            Common.Settings.Volume = sldVolume.Value;
             Common.Settings.FormGeometry = new Rectangle(Location.X, Location.Y, Width, Height);
+            Common.Settings.Volume = sldVolume.Value;
             Common.Settings.Autoplay = btnAutoplay.Checked;
             Common.Settings.Loop = btnLoop.Checked;
-
-            Common.Settings.AllTags = ftree.AllTags;
-            Common.Settings.TaggedPaths = ftree.TaggedPaths;
-// Common.Settings.Autoplay = !ftree.DoubleClickSelect;
-
             Common.Settings.Save();
         }
 
@@ -211,19 +209,28 @@ namespace MidiStyleExplorer
 
             pg.PropertyValueChanged += (sdr, args) =>
             {
-                restart |= args.ChangedItem.PropertyDescriptor.Name.EndsWith("Device");
+                switch(args.ChangedItem.PropertyDescriptor.Name)
+                {
+                    case "MidiOutDevice":
+                    case "ControlColor":
+                    case "RootDirs": // a bit heavy-handed...
+                        restart = true;
+                        break;
+                }
             };
 
             f.Controls.Add(pg);
             f.ShowDialog();
 
-            // Figure out what changed - each handled differently.
+            // Figure out what changed.
             if (restart)
             {
-                MessageBox.Show("Restart required for device changes to take effect");
+                MessageBox.Show("Restart required for changes to take effect");
             }
 
+            // Benign changes.
             barBar.Snap = Common.Settings.Snap;
+            btnLoop.Checked = Common.Settings.Loop;
 
             SaveSettings();
         }
@@ -266,7 +273,6 @@ namespace MidiStyleExplorer
         void Navigator_FileSelectedEvent(object? sender, string fn)
         {
             OpenFile(fn);
-            //_fn = fn;
         }
 
         /// <summary>
@@ -327,18 +333,16 @@ namespace MidiStyleExplorer
         /// <returns>Status.</returns>
         public void OpenFile(string fn)
         {
-            Stop();
+            chkPlay.Checked = false; // ==> stop
 
             LogMessage("INF", $"Opening file: {fn}");
 
             try
             {
-                Stop();
-                Rewind();
-
                 // Process the file.
                 _mfile = new();
                 _mfile.Read(fn);
+
                 // All channel numbers.
                 //var channels = _mfile.AllEvents.Select(e => e.Channel).Distinct().OrderBy(e => e);
 
@@ -379,11 +383,10 @@ namespace MidiStyleExplorer
                 Text = $"MidiStyleExplorer {MiscUtils.GetVersionString()} - {fn} File Type:{_mfile.MidiFileType} Tracks:{_mfile.Tracks} PPQ:{_mfile.DeltaTicksPerQuarterNote}";
                 Common.Settings.RecentFiles.UpdateMru(fn);
 
-                Stop();
                 Rewind();
                 if (btnAutoplay.Checked)
                 {
-                    Play();
+                    chkPlay.Checked = true; // ==> play
                 }
             }
             catch (Exception ex)
@@ -404,7 +407,7 @@ namespace MidiStyleExplorer
             this.InvokeIfRequired(_ =>
             {
                 // Start or restart?
-                if (!_running)
+                if (!_mmTimer.Running)
                 {
                     // Convert tempo to period.
                     MidiTime mt = new()
@@ -418,15 +421,11 @@ namespace MidiStyleExplorer
                     double period = mt.RoundedInternalPeriod();
                     _mmTimer.SetTimer((int)Math.Round(period), MmTimerCallback);
                     _mmTimer.Start();
-
-                    _running = true;
                 }
                 else
                 {
                     Rewind();
                 }
-
-                SetPlayCheck(true);
             });
 
             return true;
@@ -439,35 +438,9 @@ namespace MidiStyleExplorer
         bool Stop()
         {
             _mmTimer.Stop();
-            _running = false;
             // Send midi stop all notes just in case.
             KillAll();
-            SetPlayCheck(false);
             return true;
-        }
-
-        /// <summary>
-        /// Need to temporarily suppress CheckedChanged event.
-        /// </summary>
-        /// <param name="on"></param>
-        void SetPlayCheck(bool on)
-        {
-            this.InvokeIfRequired(_ =>
-            {
-                chkPlay.CheckedChanged -= Play_CheckedChanged;
-                chkPlay.Checked = on;
-                chkPlay.CheckedChanged += Play_CheckedChanged;
-            });
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void Play_CheckedChanged(object? sender, EventArgs e)
-        {
-            var _ = chkPlay.Checked ? Play() : Stop();
         }
 
         /// <summary>
@@ -481,7 +454,7 @@ namespace MidiStyleExplorer
             {
                 case Keys.Space:
                     // Toggle.
-                    bool _ = chkPlay.Checked ? Stop() : Play();
+                    chkPlay.Checked = !chkPlay.Checked;
                     e.Handled = true;
                     break;
 
@@ -504,23 +477,13 @@ namespace MidiStyleExplorer
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void Rewind_Click(object? sender, EventArgs e)
-        {
-            Rewind();
-        }
-
-        /// <summary>
-        /// 
+        /// Go back Jack.
         /// </summary>
         public void Rewind()
         {
+            // Might come from another thread.
             this.InvokeIfRequired(_ =>
             {
-                //Stop();
                 barBar.Current = BarSpan.Zero;
             });
         }
@@ -532,7 +495,7 @@ namespace MidiStyleExplorer
         /// </summary>
         void MmTimerCallback(double totalElapsed, double periodElapsed)
         {
-            if (_running)
+            if (_mmTimer.Running)
             {
                 // Any soloes?
                 bool solo = _channels.Where(c => c.control.State == PlayState.Solo).Any();
@@ -599,7 +562,6 @@ namespace MidiStyleExplorer
                     }
                     else
                     {
-                        _running = false;
                         Stop();
                         Rewind();
                     }
@@ -652,10 +614,10 @@ namespace MidiStyleExplorer
         /// <param name="e"></param>
         void Tempo_ValueChanged(object? sender, EventArgs e)
         {
-            if (_running)
+            if (_mmTimer.Running)
             {
-                Stop();
-                Play();
+                chkPlay.Checked = false; // ==> stop
+                chkPlay.Checked = true; // ==> play
             }
         }
 
@@ -700,11 +662,12 @@ namespace MidiStyleExplorer
             var pinfo = GetPatternInfo(lbPatterns.SelectedItem.ToString()!);
             LoadPattern(pinfo!);
 
-            Stop();
+            chkPlay.Checked = false; // ==> stop
             Rewind();
+
             if (btnAutoplay.Checked)
             {
-                Play();
+                chkPlay.Checked = true; // ==> play
             }
         }
 
@@ -906,7 +869,7 @@ namespace MidiStyleExplorer
         /// <summary>
         /// Output part of the file to a new midi file.
         /// </summary>
-        /// <param name="fn">Where to put the midi.</param>
+        /// <param name="fn">Where to put the midi file.</param>
         /// <param name="pattern">Specific pattern if a style file.</param>
         /// <param name="info">Extra info to add to midi file.</param>
         void ExportMidi(string fn, string pattern, string info)  // TODO add start/end range?

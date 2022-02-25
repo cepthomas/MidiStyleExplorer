@@ -24,7 +24,7 @@ namespace MidiStyleExplorer
         [DisplayName("Root Directories")]
         [Description("Where to look in order as they appear.")]
         [Browsable(true)]
-        [Editor(typeof(ListEditor), typeof(UITypeEditor))] // Should be a proper folder picker.
+        [Editor(typeof(StringListEditor), typeof(UITypeEditor))] // TODO Should be a proper folder picker.
         public List<string> RootDirs { get; set; } = new();
 
         [DisplayName("Midi Output Device")]
@@ -37,16 +37,6 @@ namespace MidiStyleExplorer
         [Description("Use this tempo if it's not in the file.")]
         [Browsable(true)]
         public int DefaultTempo { get; set; } = 100;
-
-        [DisplayName("Autoplay Files")]
-        [Description("Selection plays file otherwise requires double click.")]
-        [Browsable(true)]
-        public bool Autoplay { get; set; } = true;
-
-        [DisplayName("Loop Files")]
-        [Description("Loop play forever.")]
-        [Browsable(true)]
-        public bool Loop { get; set; } = false;
 
         [DisplayName("Dump To Clipboard")]
         [Description("Otherwise to file.")]
@@ -73,23 +63,25 @@ namespace MidiStyleExplorer
 
         #region Persisted Non-editable Properties
         [Browsable(false)]
-        public bool Valid { get; set; } = false;
-
-        [Browsable(false)]
         [JsonConverter(typeof(JsonRectangleConverter))]
         public Rectangle FormGeometry { get; set; } = new Rectangle(50, 50, 600, 400);
+
+        [Browsable(false)]
+        public bool Autoplay { get; set; } = true;
+
+        [Browsable(false)]
+        public bool Loop { get; set; } = false;
 
         [Browsable(false)]
         public double Volume { get; set; } = 0.5;
 
         [Browsable(false)]
         public List<string> RecentFiles { get; set; } = new List<string>();
+        #endregion
 
+        #region Non-persisted Properties
         [Browsable(false)]
-        public Dictionary<string, bool> AllTags { get; set; } = new Dictionary<string, bool>();
-
-        [Browsable(false)]
-        public Dictionary<string, string> TaggedPaths { get; set; } = new Dictionary<string, string>();
+        public bool Valid { get; set; } = false;
         #endregion
 
         #region Fields

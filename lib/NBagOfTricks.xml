@@ -453,6 +453,9 @@
         <member name="F:NBagOfTricks.MmTimerEx.TimerInstance.elapsed">
             <summary>Actual accumulated msec since last event.</summary> 
         </member>
+        <member name="P:NBagOfTricks.MmTimerEx.Running">
+            <summary>Indicates whether or not the timer is running.</summary>
+        </member>
         <member name="F:NBagOfTricks.MmTimerEx._timers">
             <summary>All the timer instances. Key is id.</summary>
         </member>
@@ -461,9 +464,6 @@
         </member>
         <member name="F:NBagOfTricks.MmTimerEx._timerID">
             <summary>Multimedia timer identifier. -1 is not inited, 0 is fail to init, other is valid id.</summary>
-        </member>
-        <member name="F:NBagOfTricks.MmTimerEx._running">
-            <summary>Indicates whether or not the timer is running.</summary>
         </member>
         <member name="F:NBagOfTricks.MmTimerEx._startTicks">
             <summary>Stopwatch support.</summary>
