@@ -24,7 +24,7 @@ namespace MidiStyleExplorer
         [DisplayName("Root Directories")]
         [Description("Where to look in order as they appear.")]
         [Browsable(true)]
-        [Editor(typeof(StringListEditor), typeof(UITypeEditor))] // TODO Should be a proper folder picker.
+        [Editor(typeof(StringListEditor), typeof(UITypeEditor))] // TODO Should be a multi folder picker.
         public List<string> RootDirs { get; set; } = new();
 
         [DisplayName("Midi Output Device")]
