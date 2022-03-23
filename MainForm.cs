@@ -56,9 +56,7 @@ namespace MidiStyleExplorer
 
             // Get settings.
             string appDir = MiscUtils.GetAppDataDir("MidiStyleExplorer", "Ephemera");
-            DirectoryInfo di = new(appDir);
-            di.Create();
-            Common.Settings = UserSettings.Load(appDir);
+            Common.Settings = (UserSettings)Settings.Load(appDir, typeof(UserSettings));
 
             toolStrip1.Renderer = new NBagOfUis.CheckBoxRenderer() { SelectedColor = Common.Settings.ControlColor };
 
@@ -186,41 +184,16 @@ namespace MidiStyleExplorer
         /// </summary>
         void Settings_Click(object? sender, EventArgs e)
         {
-            using Form f = new()
-            {
-                Text = "User Settings",
-                Size = new Size(450, 450),
-                StartPosition = FormStartPosition.Manual,
-                Location = new Point(200, 200),
-                FormBorderStyle = FormBorderStyle.FixedToolWindow,
-                ShowIcon = false,
-                ShowInTaskbar = false
-            };
-
-            PropertyGridEx pg = new()
-            {
-                Dock = DockStyle.Fill,
-                PropertySort = PropertySort.Categorized,
-                SelectedObject = Common.Settings
-            };
+            var changes = Common.Settings.Edit("User Settings");
 
             // Detect changes of interest.
             bool restart = false;
 
-            pg.PropertyValueChanged += (sdr, args) =>
+            // Figure out what changed - each handled differently.
+            foreach (var (name, cat) in changes)
             {
-                switch(args.ChangedItem.PropertyDescriptor.Name)
-                {
-                    case "MidiOutDevice":
-                    case "ControlColor":
-                    case "RootDirs": // a bit heavy-handed...
-                        restart = true;
-                        break;
-                }
-            };
-
-            f.Controls.Add(pg);
-            f.ShowDialog();
+                restart |= name == "MidiOutDevice" || name == "ControlColor" || name == "RootDirs";
+            }
 
             // Figure out what changed.
             if (restart)
@@ -259,7 +232,7 @@ namespace MidiStyleExplorer
             this.InvokeIfRequired(_ =>
             {
                 string s = $"{DateTime.Now:mm\\:ss\\.fff} {cat} {msg}";
-                txtViewer.AddLine(s);
+                txtViewer.AppendLine(s);
             });
         }
         #endregion

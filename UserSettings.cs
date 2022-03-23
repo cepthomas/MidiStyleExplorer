@@ -18,7 +18,7 @@ using NBagOfUis;
 namespace MidiStyleExplorer
 {
     [Serializable]
-    public class UserSettings
+    public class UserSettings : Settings
     {
         #region Persisted editable properties
         [DisplayName("Root Directories")]
@@ -63,10 +63,6 @@ namespace MidiStyleExplorer
 
         #region Persisted Non-editable Properties
         [Browsable(false)]
-        [JsonConverter(typeof(JsonRectangleConverter))]
-        public Rectangle FormGeometry { get; set; } = new Rectangle(50, 50, 600, 400);
-
-        [Browsable(false)]
         public bool Autoplay { get; set; } = true;
 
         [Browsable(false)]
@@ -74,62 +70,11 @@ namespace MidiStyleExplorer
 
         [Browsable(false)]
         public double Volume { get; set; } = 0.5;
-
-        [Browsable(false)]
-        public List<string> RecentFiles { get; set; } = new List<string>();
         #endregion
 
         #region Non-persisted Properties
         [Browsable(false)]
         public bool Valid { get; set; } = false;
-        #endregion
-
-        #region Fields
-        /// <summary>The file name.</summary>
-        string _fn = "???";
-        #endregion
-
-        #region Persistence
-        /// <summary>Create object from file.</summary>
-        public static UserSettings Load(string appDir)
-        {
-            UserSettings set = new();
-            string fn = Path.Combine(appDir, "settings.json");
-
-            if (File.Exists(fn))
-            {
-                string json = File.ReadAllText(fn);
-                var jobj = JsonSerializer.Deserialize<UserSettings>(json);
-                if (jobj is not null)
-                {
-                    set = jobj;
-                    set._fn = fn;
-                    set.Valid = true;
-                }
-            }
-            else
-            {
-                // Doesn't exist, create a new one.
-                set = new UserSettings()
-                {
-                    _fn = fn,
-                    Valid = true
-                };
-            }
-
-            return set;
-        }
-
-        /// <summary>Save object to file.</summary>
-        public void Save()
-        {
-            if (Valid)
-            {
-                JsonSerializerOptions opts = new() { WriteIndented = true };
-                string json = JsonSerializer.Serialize(this, opts);
-                File.WriteAllText(_fn, json);
-            }
-        }
         #endregion
     }
 
