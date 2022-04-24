@@ -558,7 +558,6 @@ namespace MidiStyleExplorer
                     else
                     {
                         StopReq();
-                        //Stop();
                         Rewind();
                     }
                 }
