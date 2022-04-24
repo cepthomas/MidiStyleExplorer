@@ -68,6 +68,7 @@ namespace MidiStyleExplorer
             Text = $"Clip Explorer {MiscUtils.GetVersionString()} - No file loaded";
 
             // The text output.
+            txtViewer.Font = Font;
             txtViewer.WordWrap = true;
             txtViewer.Colors.Add("ERR", Color.LightPink);
             txtViewer.Colors.Add("WRN:", Color.Plum);
@@ -231,7 +232,8 @@ namespace MidiStyleExplorer
             // May come from a different thread.
             this.InvokeIfRequired(_ =>
             {
-                string s = $"{DateTime.Now:mm\\:ss\\.fff} {cat} {msg}";
+                // string s = $"{DateTime.Now:mm\\:ss\\.fff} {cat} {msg}";
+                string s = $"> {cat} {msg}";
                 txtViewer.AppendLine(s);
             });
         }
