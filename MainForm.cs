@@ -28,9 +28,6 @@ namespace MidiStyleExplorer
         /// <summary>Midi events from the input file.</summary>
         MidiFile _mfile = new();
 
-        /// <summary>Some midi files have drums on a different channel so allow the user to re-map.</summary>
-        int _drumChannel = MidiDefs.DEFAULT_DRUM_CHANNEL;
-
         /// <summary>All the channel controls and data for current pattern.</summary>
         readonly List<(ChannelControl control, ChannelEvents events)> _channels = new();
 
@@ -125,9 +122,6 @@ namespace MidiStyleExplorer
             // Hook up UI handlers.
             chkPlay.CheckedChanged += (_, __) => { _ = chkPlay.Checked ? Play() : Stop(); };
             btnRewind.Click += (_, __) => { Rewind(); };
-            btnDrumsOn1.CheckedChanged += (_, __) => {
-                _drumChannel = btnDrumsOn1.Checked ? 1 : MidiDefs.DEFAULT_DRUM_CHANNEL;
-                _channels.ForEach(ch => ch.control.IsDrums = ch.control.ChannelNumber == _drumChannel); };
 
             // Look for filename passed in.
             string[] args = Environment.GetCommandLineArgs();
@@ -510,7 +504,7 @@ namespace MidiStyleExplorer
                                 switch (mevt)
                                 {
                                     case NoteOnEvent evt:
-                                        if (control.ChannelNumber == _drumChannel && evt.Velocity == 0)
+                                        if (control.IsDrums && evt.Velocity == 0)
                                         {
                                             // Skip drum noteoffs as windows GM doesn't like them.
                                         }
@@ -519,7 +513,7 @@ namespace MidiStyleExplorer
                                             // Adjust volume and maybe drum channel.
                                             NoteOnEvent ne = new(
                                                 evt.AbsoluteTime,
-                                                control.ChannelNumber == _drumChannel ? MidiDefs.DEFAULT_DRUM_CHANNEL : evt.Channel,
+                                                control.IsDrums ? MidiDefs.DEFAULT_DRUM_CHANNEL : evt.Channel,
                                                 evt.NoteNumber,
                                                 (int)(evt.Velocity * sldVolume.Value * control.Volume),
                                                 evt.OffEvent is null ? 0 : evt.NoteLength); // Fix NAudio NoteLength bug.
@@ -529,7 +523,7 @@ namespace MidiStyleExplorer
                                         break;
 
                                     case NoteEvent evt:
-                                        if (control.ChannelNumber == _drumChannel)
+                                        if (control.IsDrums)
                                         {
                                             // Skip drum noteoffs as windows GM doesn't like them.
                                         }
@@ -624,18 +618,6 @@ namespace MidiStyleExplorer
         /// <param name="e"></param>
         void BarBar_CurrentTimeChanged(object? sender, EventArgs e)
         {
-        }
-
-        /// <summary>
-        /// Sometimes drums are on channel 1, usually if it's the only channel in a clip file.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void DrumsOn1_CheckedChanged(object? sender, EventArgs e)
-        {
-            _drumChannel = btnDrumsOn1.Checked ? 1 : MidiDefs.DEFAULT_DRUM_CHANNEL;
-            // Update UI.
-            _channels.ForEach(ch => ch.control.IsDrums = ch.control.ChannelNumber == _drumChannel);
         }
 
         /// <summary>
@@ -761,7 +743,7 @@ namespace MidiStyleExplorer
                         ChannelNumber = ch,
                         Patch = patch,
                         Location = new(x, y),
-                        IsDrums = ch == _drumChannel
+                        //TODO ? IsDrums = ch == _drumChannel
                     };
 
                     control.ChannelChange += ChannelChange;

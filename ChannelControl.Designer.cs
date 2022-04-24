@@ -34,13 +34,14 @@ namespace MidiStyleExplorer
             this.lblPatch = new System.Windows.Forms.Label();
             this.lblSolo = new System.Windows.Forms.Label();
             this.lblMute = new System.Windows.Forms.Label();
+            this.lblDrums = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // lblChannelNumber
             // 
             this.lblChannelNumber.AutoSize = true;
             this.lblChannelNumber.Location = new System.Drawing.Point(2, 8);
-            this.lblChannelNumber.Name = "lblNumber";
+            this.lblChannelNumber.Name = "lblChannelNumber";
             this.lblChannelNumber.Size = new System.Drawing.Size(18, 20);
             this.lblChannelNumber.TabIndex = 3;
             this.lblChannelNumber.Text = "#";
@@ -81,23 +82,32 @@ namespace MidiStyleExplorer
             // 
             // lblMute
             // 
-            this.lblMute.Location = new System.Drawing.Point(316, 7);
+            this.lblMute.Location = new System.Drawing.Point(315, 7);
             this.lblMute.Name = "lblMute";
             this.lblMute.Size = new System.Drawing.Size(20, 20);
             this.lblMute.TabIndex = 46;
             this.lblMute.Text = "M";
             // 
+            // lblDrums
+            // 
+            this.lblDrums.Location = new System.Drawing.Point(341, 7);
+            this.lblDrums.Name = "lblDrums";
+            this.lblDrums.Size = new System.Drawing.Size(20, 20);
+            this.lblDrums.TabIndex = 47;
+            this.lblDrums.Text = "D";
+            // 
             // ChannelControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.lblDrums);
             this.Controls.Add(this.lblMute);
             this.Controls.Add(this.lblSolo);
             this.Controls.Add(this.lblPatch);
             this.Controls.Add(this.sldVolume);
             this.Controls.Add(this.lblChannelNumber);
             this.Name = "ChannelControl";
-            this.Size = new System.Drawing.Size(354, 38);
+            this.Size = new System.Drawing.Size(374, 38);
             this.Load += new System.EventHandler(this.ChannelControl_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -110,5 +120,6 @@ namespace MidiStyleExplorer
         private System.Windows.Forms.Label lblPatch;
         private System.Windows.Forms.Label lblSolo;
         private System.Windows.Forms.Label lblMute;
+        private System.Windows.Forms.Label lblDrums;
     }
 }

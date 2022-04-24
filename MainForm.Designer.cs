@@ -25,7 +25,6 @@
             this.btnAutoplay = new System.Windows.Forms.ToolStripButton();
             this.btnLoop = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            this.btnDrumsOn1 = new System.Windows.Forms.ToolStripButton();
             this.btnLogMidi = new System.Windows.Forms.ToolStripButton();
             this.btnKillMidi = new System.Windows.Forms.ToolStripButton();
             this.txtViewer = new NBagOfUis.TextViewer();
@@ -50,7 +49,6 @@
             this.btnAutoplay,
             this.btnLoop,
             this.toolStripSeparator1,
-            this.btnDrumsOn1,
             this.btnLogMidi,
             this.btnKillMidi});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
@@ -119,18 +117,6 @@
             this.toolStripSeparator1.Name = "toolStripSeparator1";
             this.toolStripSeparator1.Size = new System.Drawing.Size(6, 27);
             // 
-            // btnDrumsOn1
-            // 
-            this.btnDrumsOn1.CheckOnClick = true;
-            this.btnDrumsOn1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.btnDrumsOn1.Image = ((System.Drawing.Image)(resources.GetObject("btnDrumsOn1.Image")));
-            this.btnDrumsOn1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.btnDrumsOn1.Name = "btnDrumsOn1";
-            this.btnDrumsOn1.Size = new System.Drawing.Size(32, 24);
-            this.btnDrumsOn1.Text = "D1";
-            this.btnDrumsOn1.ToolTipText = "Drums are on channel 1";
-            this.btnDrumsOn1.Click += new System.EventHandler(this.DrumsOn1_CheckedChanged);
-            // 
             // btnLogMidi
             // 
             this.btnLogMidi.CheckOnClick = true;
@@ -157,15 +143,13 @@
             // 
             this.txtViewer.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            this.txtViewer.BackColor = System.Drawing.Color.Snow;
-            this.txtViewer.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.txtViewer.Location = new System.Drawing.Point(8, 577);
             this.txtViewer.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtViewer.MaxText = 5000;
             this.txtViewer.Name = "txtViewer";
             this.txtViewer.Size = new System.Drawing.Size(648, 128);
             this.txtViewer.TabIndex = 58;
-            this.txtViewer.Text = "";
+            this.txtViewer.WordWrap = true;
             // 
             // sldVolume
             // 
@@ -224,6 +208,7 @@
             this.barBar.SubdivsPerBeat = 8;
             this.barBar.TabIndex = 82;
             this.toolTip.SetToolTip(this.barBar, "Time in bar:beat:subdivision");
+            this.barBar.ZeroBased = false;
             // 
             // sldTempo
             // 
@@ -313,7 +298,6 @@
         private System.Windows.Forms.ToolStripButton btnAutoplay;
         private System.Windows.Forms.ToolStripButton btnLoop;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-        private System.Windows.Forms.ToolStripButton btnDrumsOn1;
         private System.Windows.Forms.ToolStripButton btnLogMidi;
         private System.Windows.Forms.ToolStripButton btnKillMidi;
         private NBagOfUis.FilTree ftree;

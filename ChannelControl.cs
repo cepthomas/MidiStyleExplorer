@@ -67,10 +67,9 @@ namespace MidiStyleExplorer
         /// <summary>This is the drum channel.</summary>
         public bool IsDrums
         {
-            get { return _isDrums; }
-            set { _isDrums = value; lblPatch.Text = FormatPatch(); }
+            get { return lblDrums.BackColor == Common.Settings.ControlColor; }
+            set { lblDrums.BackColor = value ? Common.Settings.ControlColor : SystemColors.Control; lblPatch.Text = FormatPatch(); }
         }
-        bool _isDrums = false;
         #endregion
 
         /// <summary>
@@ -92,6 +91,8 @@ namespace MidiStyleExplorer
             lblSolo.Click += SoloMute_Click;
             lblMute.Click += SoloMute_Click;
             lblChannelNumber.Click += ChannelNumber_Click;
+
+            lblDrums.Click += Drums_Click;
 
             SetModeUi();
         }
@@ -165,6 +166,24 @@ namespace MidiStyleExplorer
 
                 SetModeUi();
                 ChannelChange?.Invoke(this, new ChannelChangeEventArgs() { StateChange = true });
+            }
+        }
+
+        /// <summary>
+        /// Handles drums button.
+        /// </summary>
+        void Drums_Click(object? sender, EventArgs e)
+        {
+            if (sender is not null)
+            {
+                if (lblDrums.BackColor == Common.Settings.ControlColor)
+                {
+                    lblDrums.BackColor = SystemColors.Control;
+                }
+                else
+                {
+                    lblDrums.BackColor = Common.Settings.ControlColor;
+                }
             }
         }
 
