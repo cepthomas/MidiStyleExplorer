@@ -835,7 +835,7 @@ namespace MidiStyleExplorer
             {
                 string basefn = Path.GetFileNameWithoutExtension(_mfile.Filename);
 
-                if (_mfile.Filename.EndsWith(".sty"))
+                if (_mfile.Filename.ToLower().EndsWith(".sty"))
                 {
                     foreach (var item in lbPatterns.Items) // TODO only selected channels or all if none selected.
                     {
