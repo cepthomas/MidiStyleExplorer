@@ -33,6 +33,11 @@ namespace MidiStyleExplorer
         [TypeConverter(typeof(FixedListTypeConverter))]
         public string MidiOutDevice { get; set; } = "Microsoft GS Wavetable Synth";
 
+        [DisplayName("Time is 0-based")]
+        [Description("Engineers prefer this to musician style.")]
+        [Browsable(true)]
+        public bool ZeroBased { get; set; } = false;
+
         [DisplayName("Default Tempo")]
         [Description("Use this tempo if it's not in the file.")]
         [Browsable(true)]

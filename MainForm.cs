@@ -85,6 +85,7 @@ namespace MidiStyleExplorer
             sldTempo.Value = Common.Settings.DefaultTempo;
 
             // Time controller.
+            barBar.ZeroBased = Common.Settings.ZeroBased;
             barBar.BeatsPerBar = Common.BEATS_PER_BAR;
             barBar.SubdivsPerBeat = Common.PPQ;
             barBar.Snap = Common.Settings.Snap;
@@ -193,7 +194,7 @@ namespace MidiStyleExplorer
             // Figure out what changed - each handled differently.
             foreach (var (name, cat) in changes)
             {
-                restart |= name == "MidiOutDevice" || name == "ControlColor" || name == "RootDirs";
+                restart |= name == "MidiOutDevice" || name == "ControlColor" || name == "RootDirs" || name == "ZeroBased";
             }
 
             // Figure out what changed.
