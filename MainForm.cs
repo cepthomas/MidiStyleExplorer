@@ -412,9 +412,29 @@ namespace MidiStyleExplorer
         /// <returns></returns>
         bool Stop()
         {
-            _mmTimer.Stop();
-            // Send midi stop all notes just in case.
-            KillAll();
+            // Might come from another thread.
+            this.InvokeIfRequired(_ =>
+            {
+                _mmTimer.Stop();
+                // Send midi stop all notes just in case.
+                KillAll();
+            });
+
+            return true;
+        }
+
+        /// <summary>
+        /// Wrapper for cross-thread.
+        /// </summary>
+        /// <returns></returns>
+        bool StopReq()
+        {
+            // Might come from another thread.
+            this.InvokeIfRequired(_ =>
+            {
+                chkPlay.Checked = false;
+            });
+
             return true;
         }
 
@@ -537,7 +557,8 @@ namespace MidiStyleExplorer
                     }
                     else
                     {
-                        Stop();
+                        StopReq();
+                        //Stop();
                         Rewind();
                     }
                 }
@@ -545,7 +566,7 @@ namespace MidiStyleExplorer
         }
 
         /// <summary>
-        /// 
+        /// Send midi.
         /// </summary>
         /// <param name="evt"></param>
         void MidiSend(MidiEvent evt)
@@ -762,9 +783,9 @@ namespace MidiStyleExplorer
                 }
             }
 
-            // Figure out times. Round up to bar.
-            int floor = lastSubdiv / (Common.PPQ * 4); // 4/4 only.
-            lastSubdiv = (floor + 1) * (Common.PPQ * 4);
+            //// Figure out times. Round up to bar.
+            //int floor = lastSubdiv / (Common.PPQ * 4); // 4/4 only.
+            //lastSubdiv = (floor + 1) * (Common.PPQ * 4);
 
             barBar.Length = new BarSpan(lastSubdiv);
             barBar.Start = BarSpan.Zero;
