@@ -49,7 +49,6 @@ namespace MidiStyleExplorer
         #region Properties set by client
         /// <summary>Sometimes drums are not on the default channel.</summary>
         public int DrumChannel { get; set; } = MidiDefs.DEFAULT_DRUM_CHANNEL;
-
         #endregion
 
         #region Fields
@@ -70,7 +69,8 @@ namespace MidiStyleExplorer
         /// <param name="fn"></param>
         public void Read(string fn, bool includeNoisy = false)
         {
-            //TODO: auto-determine which channels have drums? adjust quiet drums. see 2 non-std drums in "C:\\Users\\cepth\\OneDrive\\Audio\\Midi\\styles\\Gary USB\\g-70 styles\\G-70 #1\\ContempBeat_G70.S423.STY",
+            // TODO: auto-determine which channels have drums? adjust quiet drums.
+            // see 2 non-std drum channels in "C:\\Users\\cepth\\OneDrive\\Audio\\Midi\\styles\\Gary USB\\g-70 styles\\G-70 #1\\ContempBeat_G70.S423.STY",
 
             _includeNoisy = includeNoisy;
 

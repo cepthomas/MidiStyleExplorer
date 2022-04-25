@@ -718,8 +718,6 @@ namespace MidiStyleExplorer
         /// <param name="pinfo"></param>
         void LoadPattern(PatternInfo pinfo)
         {
-            //TODO: channel solo/mute/drum/vol/selected sticky with new pattern(file ?) - use patch name or number? reset all btn?
-
             // Quiet.
             KillAll();
 
@@ -842,6 +840,8 @@ namespace MidiStyleExplorer
             //  - selected patterns
             //  - selected channels (drums)
             //  - as zip.
+            // only selected channels or all if none selected.
+            // start/end time range?
 
             if (Directory.Exists(Common.Settings.ExportPath))
             {
@@ -849,7 +849,7 @@ namespace MidiStyleExplorer
 
                 if (_mfile.Filename.ToLower().EndsWith(".sty"))
                 {
-                    foreach (var item in lbPatterns.Items) // TODO only selected channels or all if none selected.
+                    foreach (var item in lbPatterns.Items)
                     {
                         var pattern = item.ToString()!;
                         var newfn = Path.Join(Common.Settings.ExportPath, $"{basefn}_{pattern.Replace(' ', '_')}.mid");
@@ -880,7 +880,7 @@ namespace MidiStyleExplorer
         /// <param name="fn">Where to put the midi file.</param>
         /// <param name="pattern">Specific pattern if a style file.</param>
         /// <param name="info">Extra info to add to midi file.</param>
-        void ExportMidi(string fn, string pattern, string info)  // TODO add start/end range?
+        void ExportMidi(string fn, string pattern, string info)
         {
             // Get pattern info.
             PatternInfo pinfo = _mfile.Patterns.First(p => p.Name == pattern);
