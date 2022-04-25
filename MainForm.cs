@@ -14,6 +14,7 @@ using NBagOfUis;
 using NAudio.Midi;
 
 
+
 namespace MidiStyleExplorer
 {
     public partial class MainForm : Form
@@ -28,7 +29,7 @@ namespace MidiStyleExplorer
         /// <summary>Midi events from the input file.</summary>
         MidiFile _mfile = new();
 
-        /// <summary>All the channel controls and data for current pattern.</summary>
+        /// <summary>All the channel controls and data for current pattern. Needs synchronized access.</summary>
         readonly List<(ChannelControl control, ChannelEvents events)> _channels = new();
 
         /// <summary>Supported file types in OpenFileDialog form.</summary>
@@ -492,75 +493,79 @@ namespace MidiStyleExplorer
         {
             if (_mmTimer.Running)
             {
-                // Any soloes?
-                bool solo = _channels.Where(c => c.control.State == PlayState.Solo).Any();
-
-                // Process each channel.
-                foreach (var (control, events) in _channels)
+                lock (_channels)
                 {
-                    // Look for events to send.
-                    if (control.State == PlayState.Solo || (!solo && control.State == PlayState.Normal))
+                    // Any soloes?
+                    bool solo = _channels.Where(c => c.control.State == PlayState.Solo).Any();
+
+                    // Process each channel.
+                    foreach (var (control, events) in _channels)
                     {
-                        // Process any sequence steps.
-                        if (events.MidiEvents.ContainsKey(barBar.Current.TotalSubdivs))
+                        // Look for events to send.
+                        if (control.State == PlayState.Solo || (!solo && control.State == PlayState.Normal))
                         {
-                            foreach (var mevt in events.MidiEvents[barBar.Current.TotalSubdivs])
+                            // Process any sequence steps.
+                            if (events.MidiEvents.ContainsKey(barBar.Current.TotalSubdivs))
                             {
-                                switch (mevt)
+                                foreach (var mevt in events.MidiEvents[barBar.Current.TotalSubdivs])
                                 {
-                                    case NoteOnEvent evt:
-                                        if (control.IsDrums && evt.Velocity == 0)
-                                        {
-                                            // Skip drum noteoffs as windows GM doesn't like them.
-                                        }
-                                        else
-                                        {
-                                            // Adjust volume and maybe drum channel.
-                                            NoteOnEvent ne = new(
-                                                evt.AbsoluteTime,
-                                                control.IsDrums ? MidiDefs.DEFAULT_DRUM_CHANNEL : evt.Channel,
-                                                evt.NoteNumber,
-                                                (int)(evt.Velocity * sldVolume.Value * control.Volume),
-                                                evt.OffEvent is null ? 0 : evt.NoteLength); // Fix NAudio NoteLength bug.
+                                    switch (mevt)
+                                    {
+                                        case NoteOnEvent evt:
+                                            if (control.IsDrums && evt.Velocity == 0)
+                                            {
+                                                // Skip drum noteoffs as windows GM doesn't like them.
+                                            }
+                                            else
+                                            {
+                                                // Adjust volume and maybe drum channel.
+                                                NoteOnEvent ne = new(
+                                                    evt.AbsoluteTime,
+                                                    control.IsDrums ? MidiDefs.DEFAULT_DRUM_CHANNEL : evt.Channel,
+                                                    evt.NoteNumber,
+                                                    Math.Min((int)(evt.Velocity * sldVolume.Value * control.Volume), MidiDefs.MAX_MIDI),
+                                                    evt.OffEvent is null ? 0 : evt.NoteLength); // Fix NAudio NoteLength bug.
 
-                                            MidiSend(ne);
-                                        }
-                                        break;
+                                                MidiSend(ne);
+                                            }
+                                            break;
 
-                                    case NoteEvent evt:
-                                        if (control.IsDrums)
-                                        {
-                                            // Skip drum noteoffs as windows GM doesn't like them.
-                                        }
-                                        else
-                                        {
-                                            MidiSend(evt);
-                                        }
-                                        break;
+                                        case NoteEvent evt:
+                                            if (control.IsDrums)
+                                            {
+                                                // Skip drum noteoffs as windows GM doesn't like them.
+                                            }
+                                            else
+                                            {
+                                                MidiSend(evt);
+                                            }
+                                            break;
 
-                                    default:
-                                        // Everything else as is.
-                                        MidiSend(mevt);
-                                        break;
+                                        default:
+                                            // Everything else as is.
+                                            MidiSend(mevt);
+                                            break;
+                                    }
                                 }
                             }
                         }
                     }
+
+                    // Bump time. Check for end of play.
+                    if (barBar.IncrementCurrent(1))
+                    {
+                        if (btnLoop.Checked)
+                        {
+                            Play();
+                        }
+                        else
+                        {
+                            StopReq();
+                            Rewind();
+                        }
+                    }
                 }
 
-                // Bump time. Check for end of play.
-                if (barBar.IncrementCurrent(1))
-                {
-                    if (btnLoop.Checked)
-                    {
-                        Play();
-                    }
-                    else
-                    {
-                        StopReq();
-                        Rewind();
-                    }
-                }
             }
         }
 
@@ -713,71 +718,86 @@ namespace MidiStyleExplorer
         /// <param name="pinfo"></param>
         void LoadPattern(PatternInfo pinfo)
         {
+            //TODO: channel solo/mute/drum/vol/selected sticky with new pattern(file ?) - use patch name or number? reset all btn?
+
             // Quiet.
             KillAll();
 
-            // Clean out old.
-            foreach (var (control, events) in _channels)
+            lock (_channels)
             {
-                Controls.Remove(control);
-            }
-            _channels.Clear();
-
-            // Get the new.
-            int lastSubdiv = 0;
-            int x = sldVolume.Right + 5;
-            int y = sldVolume.Top;
-
-            for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
-            {
-                int ch = i + 1;
-                int patch = pinfo.Patches[i];
-
-                // Get pattern events.
-                var chEvents = new ChannelEvents();
-                var evts = _mfile.AllEvents.
-                    Where(e => e.Pattern == pinfo.Name && e.Channel == ch && (e.MidiEvent is NoteEvent || e.MidiEvent is NoteOnEvent)).
-                    OrderBy(e => e.AbsoluteTime);
-                evts.ForEach(e => chEvents.Add(e.ScaledTime, e.MidiEvent)); // use internal time
-
-                if(evts.Any())
+                // Clean out old. Save current state to restore next.
+                Dictionary<int, (PlayState, double, bool, bool)> stats = new();
+                foreach (var (control, events) in _channels)
                 {
-                    // Make new controls.
-                    ChannelControl control = new()
+                    stats.Add(control.ChannelNumber, (control.State, control.Volume, control.Selected, control.IsDrums));
+                    Controls.Remove(control);
+                }
+                _channels.Clear();
+
+                // Get the new.
+                int lastSubdiv = 0;
+                int x = sldVolume.Right + 5;
+                int y = sldVolume.Top;
+
+                for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
+                {
+                    int ch = i + 1;
+                    int patch = pinfo.Patches[i];
+
+                    // Get pattern events.
+                    var chEvents = new ChannelEvents();
+                    var evts = _mfile.AllEvents.
+                        Where(e => e.Pattern == pinfo.Name && e.Channel == ch && (e.MidiEvent is NoteEvent || e.MidiEvent is NoteOnEvent)).
+                        OrderBy(e => e.AbsoluteTime);
+                    evts.ForEach(e => chEvents.Add(e.ScaledTime, e.MidiEvent)); // use internal time
+
+                    if (evts.Any())
                     {
-                        ChannelNumber = ch,
-                        Patch = patch,
-                        Location = new(x, y),
-                        //TODO ? IsDrums = ch == _drumChannel
-                    };
+                        // Make new controls.
+                        ChannelControl control = new()
+                        {
+                            ChannelNumber = ch,
+                            Patch = patch,
+                            Location = new(x, y),
+                        };
 
-                    control.ChannelChange += ChannelChange;
-                    Controls.Add(control);
+                        // Sticky previous attributes.
+                        if (stats.ContainsKey(ch))
+                        {
+                            control.State = stats[ch].Item1;
+                            control.Volume = stats[ch].Item2;
+                            control.Selected = stats[ch].Item3;
+                            control.IsDrums = stats[ch].Item4;
+                        }
 
-                    lastSubdiv = Math.Max(lastSubdiv, chEvents.MaxSubdiv);
+                        control.ChannelChange += ChannelChange;
+                        Controls.Add(control);
 
-                    _channels.Add((control, chEvents));
+                        lastSubdiv = Math.Max(lastSubdiv, chEvents.MaxSubdiv);
 
-                    // Adjust positioning.
-                    y += control.Height + 5;
+                        _channels.Add((control, chEvents));
 
-                    // Send real patches.
-                    if (patch > PatternInfo.NO_PATCH)
-                    {
-                        PatchChangeEvent evt = new(0, ch, patch);
-                        MidiSend(evt);
+                        // Adjust positioning.
+                        y += control.Height + 5;
+
+                        // Send real patches.
+                        if (patch > PatternInfo.NO_PATCH)
+                        {
+                            PatchChangeEvent evt = new(0, ch, patch);
+                            MidiSend(evt);
+                        }
                     }
                 }
+
+                //// Figure out times. Round up to bar.
+                //int floor = lastSubdiv / (Common.PPQ * 4); // 4/4 only.
+                //lastSubdiv = (floor + 1) * (Common.PPQ * 4);
+
+                barBar.Length = new BarSpan(lastSubdiv);
+                barBar.Start = BarSpan.Zero;
+                barBar.End = barBar.Length - BarSpan.OneSubdiv;
+                barBar.Current = BarSpan.Zero;
             }
-
-            //// Figure out times. Round up to bar.
-            //int floor = lastSubdiv / (Common.PPQ * 4); // 4/4 only.
-            //lastSubdiv = (floor + 1) * (Common.PPQ * 4);
-
-            barBar.Length = new BarSpan(lastSubdiv);
-            barBar.Start = BarSpan.Zero;
-            barBar.End = barBar.Length - BarSpan.OneSubdiv;
-            barBar.Current = BarSpan.Zero;
         }
         #endregion
 
@@ -818,7 +838,12 @@ namespace MidiStyleExplorer
         /// <param name="e"></param>
         void Export_Click(object? sender, EventArgs e)
         {
-            if(Directory.Exists(Common.Settings.ExportPath))
+            //TODO export options:
+            //  - selected patterns
+            //  - selected channels (drums)
+            //  - as zip.
+
+            if (Directory.Exists(Common.Settings.ExportPath))
             {
                 string basefn = Path.GetFileNameWithoutExtension(_mfile.Filename);
 
@@ -889,38 +914,42 @@ namespace MidiStyleExplorer
                 }
             }
 
-            // Combine the midi events for current pattern ordered by timestamp.
-            List<MidiEvent> allEvts = new();
-            foreach (var (control, events) in _channels)
+            lock (_channels)
             {
-                events.MidiEvents.ForEach(kv =>
+                // Combine the midi events for current pattern ordered by timestamp.
+                List<MidiEvent> allEvts = new();
+                foreach (var (control, events) in _channels)
                 {
-                    // TODO adjust velocity for noteon based on slider values? or normalize?
-                    kv.Value.ForEach(e =>
+                    events.MidiEvents.ForEach(kv =>
                     {
-                        e.AbsoluteTime = kv.Key;
-                        e.Channel = control.ChannelNumber;
-                        allEvts.Add(e);
+                        // TODO adjust velocity for noteon based on slider values? or normalize?
+                        kv.Value.ForEach(e =>
+                        {
+                            e.AbsoluteTime = kv.Key;
+                            e.Channel = control.ChannelNumber;
+                            allEvts.Add(e);
+                        });
                     });
-                });
 
-                foreach (var channelEventTime in events.MidiEvents)
-                {
-                    var theEvents = channelEventTime.Value;
-                    foreach (var outEvent in theEvents)
+                    foreach (var channelEventTime in events.MidiEvents)
                     {
-                        outEvent.AbsoluteTime = channelEventTime.Key;
-                        outEvent.Channel = control.ChannelNumber;
-                        allEvts.Add(outEvent);
+                        var theEvents = channelEventTime.Value;
+                        foreach (var outEvent in theEvents)
+                        {
+                            outEvent.AbsoluteTime = channelEventTime.Key;
+                            outEvent.Channel = control.ChannelNumber;
+                            allEvts.Add(outEvent);
+                        }
                     }
                 }
+
+                // Copy to output.
+                allEvts.OrderBy(e => e.AbsoluteTime).ForEach(e =>
+                {
+                    outEvents.Add(e);
+                });
             }
 
-            // Copy to output.
-            allEvts.OrderBy(e => e.AbsoluteTime).ForEach(e =>
-            {
-                outEvents.Add(e);
-            });
 
             // End track.
             long ltime = outEvents.Last().AbsoluteTime;

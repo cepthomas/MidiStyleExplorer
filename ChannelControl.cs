@@ -67,9 +67,14 @@ namespace MidiStyleExplorer
         /// <summary>This is the drum channel.</summary>
         public bool IsDrums
         {
-            get { return lblDrums.BackColor == Common.Settings.ControlColor; }
-            set { lblDrums.BackColor = value ? Common.Settings.ControlColor : SystemColors.Control; lblPatch.Text = FormatPatch(); }
+            get { return lblDrums.BackColor == _selColor; }
+            set { lblDrums.BackColor = value ? _selColor : _unselColor; lblPatch.Text = FormatPatch(); }
         }
+        #endregion
+
+        #region Fields
+        Color _selColor = Common.Settings.ControlColor;
+        Color _unselColor = SystemColors.Control;
         #endregion
 
         /// <summary>
@@ -87,7 +92,7 @@ namespace MidiStyleExplorer
         /// <param name="e"></param>
         void ChannelControl_Load(object? sender, EventArgs e)
         {
-            sldVolume.DrawColor = Common.Settings.ControlColor;
+            sldVolume.DrawColor = _selColor;
             lblSolo.Click += SoloMute_Click;
             lblMute.Click += SoloMute_Click;
             lblChannelNumber.Click += ChannelNumber_Click;
@@ -105,16 +110,16 @@ namespace MidiStyleExplorer
             switch (_state)
             {
                 case PlayState.Normal:
-                    lblSolo.BackColor = SystemColors.Control;
-                    lblMute.BackColor = SystemColors.Control;
+                    lblSolo.BackColor = _unselColor;
+                    lblMute.BackColor = _unselColor;
                     break;
                 case PlayState.Solo:
-                    lblSolo.BackColor = Common.Settings.ControlColor;
-                    lblMute.BackColor = SystemColors.Control;
+                    lblSolo.BackColor = _selColor;
+                    lblMute.BackColor = _unselColor;
                     break;
                 case PlayState.Mute:
-                    lblSolo.BackColor = SystemColors.Control;
-                    lblMute.BackColor = Common.Settings.ControlColor;
+                    lblSolo.BackColor = _unselColor;
+                    lblMute.BackColor = _selColor;
                     break;
             }
         }
@@ -132,8 +137,8 @@ namespace MidiStyleExplorer
                 _state = PlayState.Normal; // default
 
                 // Toggle control. Get current.
-                bool soloSel = lblSolo.BackColor == Common.Settings.ControlColor;
-                bool muteSel = lblMute.BackColor == Common.Settings.ControlColor;
+                bool soloSel = lblSolo.BackColor == _selColor;
+                bool muteSel = lblMute.BackColor == _selColor;
 
                 if (lbl == lblSolo)
                 {
@@ -176,13 +181,13 @@ namespace MidiStyleExplorer
         {
             if (sender is not null)
             {
-                if (lblDrums.BackColor == Common.Settings.ControlColor)
+                if (lblDrums.BackColor == _selColor)
                 {
-                    lblDrums.BackColor = SystemColors.Control;
+                    lblDrums.BackColor = _unselColor;
                 }
                 else
                 {
-                    lblDrums.BackColor = Common.Settings.ControlColor;
+                    lblDrums.BackColor = _selColor;
                 }
             }
         }
@@ -234,7 +239,8 @@ namespace MidiStyleExplorer
         /// </summary>
         string FormatPatch()
         {
-            string spatch = IsDrums ? "Drums" : _patch == PatternInfo.NO_PATCH ? "NoPatch" : MidiDefs.GetInstrumentDef(_patch);
+            //string spatch = IsDrums ? "Drums" : _patch == PatternInfo.NO_PATCH ? "NoPatch" : MidiDefs.GetInstrumentDef(_patch);
+            string spatch = _patch == PatternInfo.NO_PATCH ? "NoPatch" : MidiDefs.GetInstrumentDef(_patch);
             return spatch;
         }
 
@@ -254,7 +260,7 @@ namespace MidiStyleExplorer
         /// </summary>
         void FormatSelect()
         {
-            lblChannelNumber.BackColor = _selected ? Common.Settings.ControlColor : SystemColors.Control;
+            lblChannelNumber.BackColor = _selected ? _selColor : _unselColor;
         }
 
         /// <summary>
