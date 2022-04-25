@@ -154,7 +154,7 @@
             // sldVolume
             // 
             this.sldVolume.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.sldVolume.DecPlaces = 1;
+            this.sldVolume.Resolution = 0.05D;
             this.sldVolume.DrawColor = System.Drawing.Color.Fuchsia;
             this.sldVolume.Label = "vol";
             this.sldVolume.Location = new System.Drawing.Point(558, 103);
@@ -163,7 +163,6 @@
             this.sldVolume.Minimum = 0D;
             this.sldVolume.Name = "sldVolume";
             this.sldVolume.Orientation = System.Windows.Forms.Orientation.Horizontal;
-            this.sldVolume.ResetValue = 0D;
             this.sldVolume.Size = new System.Drawing.Size(98, 40);
             this.sldVolume.TabIndex = 42;
             this.sldVolume.Value = 1D;
@@ -213,7 +212,7 @@
             // sldTempo
             // 
             this.sldTempo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.sldTempo.DecPlaces = 0;
+            this.sldTempo.Resolution = 5;
             this.sldTempo.DrawColor = System.Drawing.Color.White;
             this.sldTempo.Label = "BPM";
             this.sldTempo.Location = new System.Drawing.Point(558, 154);
@@ -222,7 +221,6 @@
             this.sldTempo.Minimum = 50D;
             this.sldTempo.Name = "sldTempo";
             this.sldTempo.Orientation = System.Windows.Forms.Orientation.Horizontal;
-            this.sldTempo.ResetValue = 50D;
             this.sldTempo.Size = new System.Drawing.Size(98, 40);
             this.sldTempo.TabIndex = 80;
             this.toolTip.SetToolTip(this.sldTempo, "Tempo adjuster");

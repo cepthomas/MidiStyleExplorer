@@ -49,7 +49,7 @@ namespace MidiStyleExplorer
             // sldVolume
             // 
             this.sldVolume.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.sldVolume.DecPlaces = 1;
+            this.sldVolume.Resolution = 0.05D;
             this.sldVolume.DrawColor = System.Drawing.Color.White;
             this.sldVolume.Label = "vol";
             this.sldVolume.Location = new System.Drawing.Point(195, 2);
@@ -58,7 +58,6 @@ namespace MidiStyleExplorer
             this.sldVolume.Minimum = 0D;
             this.sldVolume.Name = "sldVolume";
             this.sldVolume.Orientation = System.Windows.Forms.Orientation.Horizontal;
-            this.sldVolume.ResetValue = 0D;
             this.sldVolume.Size = new System.Drawing.Size(80, 30);
             this.sldVolume.TabIndex = 43;
             this.sldVolume.Value = 1D;

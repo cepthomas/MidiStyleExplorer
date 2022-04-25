@@ -62,7 +62,7 @@ namespace MidiStyleExplorer
             Size = new Size(Common.Settings.FormGeometry.Width, Common.Settings.FormGeometry.Height);
             WindowState = FormWindowState.Normal;
             KeyPreview = true; // for routing kbd strokes through MainForm_KeyDown
-            Text = $"Clip Explorer {MiscUtils.GetVersionString()} - No file loaded";
+            Text = $"Midi Style Explorer {MiscUtils.GetVersionString()} - No file loaded";
 
             // The text output.
             txtViewer.Font = Font;
@@ -76,10 +76,11 @@ namespace MidiStyleExplorer
 
             // Other UI configs.
             chkPlay.FlatAppearance.CheckedBackColor = Common.Settings.ControlColor;
-            sldVolume.Value = Common.Settings.Volume;
             sldVolume.DrawColor = Common.Settings.ControlColor;
+            sldVolume.Value = Common.Settings.Volume;
             sldTempo.DrawColor = Common.Settings.ControlColor;
             sldTempo.Value = Common.Settings.DefaultTempo;
+            sldTempo.Resolution = Common.Settings.TempoResolution;
 
             // Time controller.
             barBar.ZeroBased = Common.Settings.ZeroBased;
@@ -188,7 +189,10 @@ namespace MidiStyleExplorer
             // Figure out what changed - each handled differently.
             foreach (var (name, cat) in changes)
             {
-                restart |= name == "MidiOutDevice" || name == "ControlColor" || name == "RootDirs" || name == "ZeroBased";
+                restart |= name == "MidiOutDevice";
+                restart |= name == "ControlColor";
+                restart |= name == "RootDirs";
+                restart |= name == "ZeroBased";
             }
 
             // Figure out what changed.
@@ -200,6 +204,7 @@ namespace MidiStyleExplorer
             // Benign changes.
             barBar.Snap = Common.Settings.Snap;
             btnLoop.Checked = Common.Settings.Loop;
+            sldTempo.Resolution = Common.Settings.TempoResolution;
 
             SaveSettings();
         }
@@ -350,7 +355,7 @@ namespace MidiStyleExplorer
                     }
                 }
 
-                Text = $"MidiStyleExplorer {MiscUtils.GetVersionString()} - {fn} File Type:{_mfile.MidiFileType} Tracks:{_mfile.Tracks} PPQ:{_mfile.DeltaTicksPerQuarterNote}";
+                Text = $"Midi Style Explorer {MiscUtils.GetVersionString()} - {fn} File Type:{_mfile.MidiFileType} Tracks:{_mfile.Tracks} PPQ:{_mfile.DeltaTicksPerQuarterNote}";
                 Common.Settings.RecentFiles.UpdateMru(fn);
 
                 Rewind();
@@ -362,7 +367,7 @@ namespace MidiStyleExplorer
             catch (Exception ex)
             {
                 LogMessage("ERR", $"Couldn't open the file: {fn} because: {ex.Message}");
-                Text = $"MidiStyleExplorer {MiscUtils.GetVersionString()} - No file loaded";
+                Text = $"Midi Style Explorer {MiscUtils.GetVersionString()} - No file loaded";
             }
         }
         #endregion

@@ -43,6 +43,11 @@ namespace MidiStyleExplorer
         [Browsable(true)]
         public int DefaultTempo { get; set; } = 100;
 
+        [DisplayName("Tempo Resolution")]
+        [Description("Adjust tempo in UI.")]
+        [Browsable(true)]
+        public int TempoResolution { get; set; } = 5;
+
         [DisplayName("Dump To Clipboard")]
         [Description("Otherwise to file.")]
         [Browsable(true)]
