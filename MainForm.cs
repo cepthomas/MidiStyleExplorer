@@ -324,7 +324,7 @@ namespace MidiStyleExplorer
 
                 // Init new stuff with contents of file/pattern.
                 lbPatterns.Items.Clear();
-                if (_mfile.Filename.ToLower().EndsWith(".mid"))
+                if (_mfile.FileName.ToLower().EndsWith(".mid"))
                 {
                     var pinfo = _mfile.Patterns[0];
                     LoadPattern(pinfo);
@@ -845,28 +845,28 @@ namespace MidiStyleExplorer
 
             if (Directory.Exists(Common.Settings.ExportPath))
             {
-                string basefn = Path.GetFileNameWithoutExtension(_mfile.Filename);
+                string basefn = Path.GetFileNameWithoutExtension(_mfile.FileName);
 
-                if (_mfile.Filename.ToLower().EndsWith(".sty"))
+                if (_mfile.FileName.ToLower().EndsWith(".sty"))
                 {
                     foreach (var item in lbPatterns.Items)
                     {
                         var pattern = item.ToString()!;
                         var newfn = Path.Join(Common.Settings.ExportPath, $"{basefn}_{pattern.Replace(' ', '_')}.mid");
-                        var info = $"Export {pattern} from {_mfile.Filename}";
+                        var info = $"Export {pattern} from {_mfile.FileName}";
 
                         ExportMidi(newfn, pattern, info);
                     }
-                    LogMessage("INF", $"Style file {_mfile.Filename} exported to {Common.Settings.ExportPath}");
+                    LogMessage("INF", $"Style file {_mfile.FileName} exported to {Common.Settings.ExportPath}");
                 }
                 else // .mid
                 {
                     var newfn = Path.Join(Common.Settings.ExportPath, $"{basefn}_export.mid");
-                    var info = $"Export {_mfile.Filename}";
+                    var info = $"Export {_mfile.FileName}";
 
                     ExportMidi(newfn, "", info);
                 }
-                LogMessage("INF", $"Midi file {_mfile.Filename} exported to {Common.Settings.ExportPath}");
+                LogMessage("INF", $"Midi file {_mfile.FileName} exported to {Common.Settings.ExportPath}");
             }
             else
             {

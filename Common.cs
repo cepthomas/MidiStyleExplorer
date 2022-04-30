@@ -22,10 +22,6 @@ namespace MidiStyleExplorer
         #endregion
 
         /// <summary>Current global user settings.</summary>
-        public static UserSettings Settings
-        {
-            get;
-            set;
-        } = new UserSettings();
+        public static UserSettings Settings { get; set; } = new UserSettings();
     }
 }

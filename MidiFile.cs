@@ -23,7 +23,7 @@ namespace MidiStyleExplorer
 
         #region Properties - file specific
         /// <summary>From where.</summary>
-        public string Filename { get; private set; } = "";
+        public string FileName { get; private set; } = "";
 
         /// <summary>What is it.</summary>
         public int MidiFileType { get; private set; } = 0;
@@ -78,7 +78,7 @@ namespace MidiStyleExplorer
             AllEvents.Clear();
             Patterns.Clear();
             Patterns.Add(new()); // always at least one
-            Filename = fn;
+            FileName = fn;
             DeltaTicksPerQuarterNote = 0;
             _lastStreamPos = 0;
 
