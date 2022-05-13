@@ -41,9 +41,9 @@
             this.sldTempo = new NBagOfUis.Slider();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.lbPatterns = new System.Windows.Forms.CheckedListBox();
-            this.ftree = new NBagOfUis.FilTree();
             this.btnAll = new System.Windows.Forms.Button();
             this.btnNone = new System.Windows.Forms.Button();
+            this.ftree = new NBagOfUis.FilTree();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -151,7 +151,6 @@
             this.btnKillMidi.Size = new System.Drawing.Size(29, 25);
             this.btnKillMidi.Text = "toolStripButton1";
             this.btnKillMidi.ToolTipText = "Kill all midi channels";
-            this.btnKillMidi.Click += new System.EventHandler(this.Kill_Click);
             // 
             // toolStripSeparator2
             // 
@@ -162,27 +161,31 @@
             // 
             this.toolStripLabel1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.toolStripLabel1.Name = "toolStripLabel1";
-            this.toolStripLabel1.Size = new System.Drawing.Size(36, 25);
-            this.toolStripLabel1.Text = "Dr1:";
+            this.toolStripLabel1.Size = new System.Drawing.Size(40, 25);
+            this.toolStripLabel1.Text = "DC1:";
             // 
             // cmbDrumChannel1
             // 
             this.cmbDrumChannel1.AutoSize = false;
             this.cmbDrumChannel1.Name = "cmbDrumChannel1";
             this.cmbDrumChannel1.Size = new System.Drawing.Size(50, 28);
+            this.cmbDrumChannel1.ToolTipText = "Drum Channel - main";
+            this.cmbDrumChannel1.SelectedIndexChanged += new System.EventHandler(this.DrumChannel_SelectedIndexChanged);
             // 
             // toolStripLabel2
             // 
             this.toolStripLabel2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.toolStripLabel2.Name = "toolStripLabel2";
-            this.toolStripLabel2.Size = new System.Drawing.Size(36, 25);
-            this.toolStripLabel2.Text = "Dr2:";
+            this.toolStripLabel2.Size = new System.Drawing.Size(40, 25);
+            this.toolStripLabel2.Text = "DC2:";
             // 
             // cmbDrumChannel2
             // 
             this.cmbDrumChannel2.AutoSize = false;
             this.cmbDrumChannel2.Name = "cmbDrumChannel2";
             this.cmbDrumChannel2.Size = new System.Drawing.Size(50, 28);
+            this.cmbDrumChannel2.ToolTipText = "Drum channel - secndary";
+            this.cmbDrumChannel2.SelectedIndexChanged += new System.EventHandler(this.DrumChannel_SelectedIndexChanged);
             // 
             // toolStripSeparator3
             // 
@@ -216,6 +219,7 @@
             this.sldVolume.Resolution = 0.05D;
             this.sldVolume.Size = new System.Drawing.Size(98, 40);
             this.sldVolume.TabIndex = 42;
+            this.toolTip.SetToolTip(this.sldVolume, "Master volume");
             this.sldVolume.Value = 1D;
             // 
             // btnRewind
@@ -288,8 +292,30 @@
             this.lbPatterns.Name = "lbPatterns";
             this.lbPatterns.Size = new System.Drawing.Size(98, 332);
             this.lbPatterns.TabIndex = 88;
-            this.toolTip.SetToolTip(this.lbPatterns, "All patterns in style file");
+            this.toolTip.SetToolTip(this.lbPatterns, "Select patterns in style file");
             this.lbPatterns.SelectedIndexChanged += new System.EventHandler(this.Patterns_SelectedIndexChanged);
+            // 
+            // btnAll
+            // 
+            this.btnAll.Location = new System.Drawing.Point(558, 201);
+            this.btnAll.Name = "btnAll";
+            this.btnAll.Size = new System.Drawing.Size(43, 29);
+            this.btnAll.TabIndex = 90;
+            this.btnAll.Text = "++";
+            this.toolTip.SetToolTip(this.btnAll, "All patterns");
+            this.btnAll.UseVisualStyleBackColor = true;
+            this.btnAll.Click += new System.EventHandler(this.AllOrNone_Click);
+            // 
+            // btnNone
+            // 
+            this.btnNone.Location = new System.Drawing.Point(614, 201);
+            this.btnNone.Name = "btnNone";
+            this.btnNone.Size = new System.Drawing.Size(43, 29);
+            this.btnNone.TabIndex = 91;
+            this.btnNone.Text = "--";
+            this.toolTip.SetToolTip(this.btnNone, "Clear patterns");
+            this.btnNone.UseVisualStyleBackColor = true;
+            this.btnNone.Click += new System.EventHandler(this.AllOrNone_Click);
             // 
             // ftree
             // 
@@ -300,24 +326,6 @@
             this.ftree.Size = new System.Drawing.Size(527, 536);
             this.ftree.TabIndex = 89;
             this.ftree.FileSelectedEvent += new System.EventHandler<string>(this.Navigator_FileSelectedEvent);
-            // 
-            // btnAll
-            // 
-            this.btnAll.Location = new System.Drawing.Point(558, 201);
-            this.btnAll.Name = "btnAll";
-            this.btnAll.Size = new System.Drawing.Size(43, 29);
-            this.btnAll.TabIndex = 90;
-            this.btnAll.Text = "++";
-            this.btnAll.UseVisualStyleBackColor = true;
-            // 
-            // btnNone
-            // 
-            this.btnNone.Location = new System.Drawing.Point(614, 201);
-            this.btnNone.Name = "btnNone";
-            this.btnNone.Size = new System.Drawing.Size(43, 29);
-            this.btnNone.TabIndex = 91;
-            this.btnNone.Text = "--";
-            this.btnNone.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
