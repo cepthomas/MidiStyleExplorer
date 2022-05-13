@@ -16,8 +16,6 @@ using MidiLib;
 using static MidiLib.ChannelCollection;
 
 
-// TODO lbPatterns should be checked lb.
-
 namespace MidiStyleExplorer
 {
     public partial class MainForm : Form
@@ -66,16 +64,6 @@ namespace MidiStyleExplorer
         // /// <summary>Reporting interval.</summary>
         // int _report = 0;
         #endregion
-
-
-ToolStripLabel toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
-ToolStripComboBox cmbDrumChannel1 = new System.Windows.Forms.ToolStripComboBox();
-ToolStripLabel toolStripLabel2 = new System.Windows.Forms.ToolStripLabel();
-ToolStripComboBox cmbDrumChannel2 = new System.Windows.Forms.ToolStripComboBox();
-
-Button btnAll = new System.Windows.Forms.Button();
-Button btnNone = new System.Windows.Forms.Button();
-
 
         #region Lifecycle
         /// <summary>
@@ -236,87 +224,7 @@ Button btnNone = new System.Windows.Forms.Button();
         }
         #endregion
 
-        #region User settings
-        /// <summary>
-        /// Collect and save user settings.
-        /// </summary>
-        void SaveSettings()
-        {
-            Common.Settings.FormGeometry = new Rectangle(Location.X, Location.Y, Width, Height);
-            Common.Settings.Volume = sldVolume.Value;
-            Common.Settings.Autoplay = btnAutoplay.Checked;
-            Common.Settings.Loop = btnLoop.Checked;
-            Common.Settings.Save();
-        }
-
-        /// <summary>
-        /// Edit the common options in a property grid.
-        /// </summary>
-        void Settings_Click(object? sender, EventArgs e)
-        {
-            var changes = Common.Settings.Edit("User Settings");
-
-            // Detect changes of interest.
-            bool restart = false;
-
-            // Figure out what changed - each handled differently.
-            foreach (var (name, cat) in changes)
-            {
-                restart |= name == "MidiOutDevice";
-                restart |= name == "ControlColor";
-                restart |= name == "RootDirs";
-                restart |= name == "ZeroBased";
-            }
-
-            // Figure out what changed.
-            if (restart)
-            {
-                MessageBox.Show("Restart required for changes to take effect");
-            }
-
-            // Benign changes.
-            barBar.Snap = Common.Settings.Snap;
-            btnLoop.Checked = Common.Settings.Loop;
-            sldTempo.Resolution = Common.Settings.TempoResolution;
-
-            SaveSettings();
-        }
-        #endregion
-
-        #region Info
-        /// <summary>
-        /// All about me.
-        /// </summary>
-        void About_Click(object? sender, EventArgs e)
-        {
-            Tools.MarkdownToHtml(File.ReadAllLines(@".\README.md").ToList(), "lightcyan", "helvetica", true);
-        }
-
-        /// <summary>
-        /// Something you should know.
-        /// </summary>
-        /// <param name="cat"></param>
-        /// <param name="msg"></param>
-        void LogMessage(string cat, string msg)
-        {
-            int catSize = 3;
-            cat = cat.Length >= catSize ? cat.Left(catSize) : cat.PadRight(catSize);
-
-            // May come from a different thread.
-            this.InvokeIfRequired(_ =>
-            {
-                // string s = $"{DateTime.Now:mm\\:ss\\.fff} {cat} {msg}";
-                string s = $"> {cat} {msg}";
-                txtViewer.AppendLine(s);
-            });
-        }
-        #endregion
-
-
-
-
-
-        #region State management - new
+        #region State management
         /// <summary>
         /// General state management. Triggered by play button or the player via mm timer function.
         /// </summary>
@@ -365,7 +273,25 @@ Button btnNone = new System.Windows.Forms.Button();
             }
 
             // Update UI.
-            SetPosition();
+            barBar.Current = new(_player.CurrentSubdiv); // TODOX need a constructor from subdivs.
+
+            //SetPosition();
+            //sldPosition.Value = _player.CurrentSubdiv * (int)sldPosition.Maximum / TheChannels.TotalSubdivs;
+
+            //// Bump time. Check for end of play.
+            //if (barBar.IncrementCurrent(1))
+            //{
+            //    if (btnLoop.Checked)
+            //    {
+            //        Play();
+            //    }
+            //    else
+            //    {
+            //        StopReq();
+            //        Rewind();
+            //    }
+            //}
+
 
             _guard = false;
         }
@@ -411,7 +337,7 @@ Button btnNone = new System.Windows.Forms.Button();
         }
         #endregion
 
-        #region Transport control - new
+        #region Transport control
         /// <summary>
         /// Internal handler.
         /// </summary>
@@ -448,7 +374,7 @@ Button btnNone = new System.Windows.Forms.Button();
         }
         #endregion
 
-        #region File handling - new
+        #region File handling
         /// <summary>
         /// Common file opener. Initializes pattern list from contents.
         /// </summary>
@@ -473,7 +399,7 @@ Button btnNone = new System.Windows.Forms.Button();
 
                 // Process the file. Set the default tempo from preferences.
                 _mdata = new();
-                _mdata.Read(fn, _defaultTempo, false);
+                _mdata.Read(fn, Common.Settings.DefaultTempo, false);
 
                 // Init new stuff with contents of file/pattern.
                 lbPatterns.Items.Clear();
@@ -536,7 +462,6 @@ Button btnNone = new System.Windows.Forms.Button();
 
             return ok;
         }
-        #endregion
 
         /// <summary>
         /// Tree has selected a file to play.
@@ -605,12 +530,9 @@ Button btnNone = new System.Windows.Forms.Button();
                 OpenFile(openDlg.FileName);
             }
         }
+        #endregion
 
-
-
-
-
-        #region Process patterns - new
+        #region Process patterns
         /// <summary>
         /// Load the requested pattern and create controls.
         /// </summary>
@@ -715,7 +637,7 @@ Button btnNone = new System.Windows.Forms.Button();
         }
         #endregion
 
-        #region Process tick - new
+        #region Process tick
         /// <summary>
         /// Multimedia timer callback. Synchronously outputs the next midi events.
         /// This is running on the background thread.
@@ -732,7 +654,8 @@ Button btnNone = new System.Windows.Forms.Button();
                 //}
 
                 _player.DoNextStep();
-                // Bump over to main thread.
+
+                // Bump update over to main thread.
                 this.InvokeIfRequired(_ => UpdateState());
 
             }
@@ -743,7 +666,7 @@ Button btnNone = new System.Windows.Forms.Button();
         }
         #endregion
 
-        #region Drum channel - new
+        #region Drum channel
         /// <summary>
         /// User changed the drum channel.
         /// </summary>
@@ -762,6 +685,83 @@ Button btnNone = new System.Windows.Forms.Button();
             _channelControls.ForEach(ctl => ctl.IsDrums =
                 (ctl.ChannelNumber == cmbDrumChannel1.SelectedIndex) ||
                 (ctl.ChannelNumber == cmbDrumChannel2.SelectedIndex));
+        }
+        #endregion
+
+        #region User settings
+        /// <summary>
+        /// Collect and save user settings.
+        /// </summary>
+        void SaveSettings()
+        {
+            Common.Settings.FormGeometry = new Rectangle(Location.X, Location.Y, Width, Height);
+            Common.Settings.Volume = sldVolume.Value;
+            Common.Settings.Autoplay = btnAutoplay.Checked;
+            Common.Settings.Loop = btnLoop.Checked;
+            Common.Settings.Save();
+        }
+
+        /// <summary>
+        /// Edit the common options in a property grid.
+        /// </summary>
+        void Settings_Click(object? sender, EventArgs e)
+        {
+            var changes = Common.Settings.Edit("User Settings");
+
+            // Detect changes of interest.
+            bool restart = false;
+
+            // Figure out what changed - each handled differently.
+            foreach (var (name, cat) in changes)
+            {
+                restart |= name == "MidiOutDevice";
+                restart |= name == "ControlColor";
+                restart |= name == "RootDirs";
+                restart |= name == "ZeroBased";
+            }
+
+            // Figure out what changed.
+            if (restart)
+            {
+                MessageBox.Show("Restart required for changes to take effect");
+            }
+
+            // Benign changes.
+            barBar.Snap = Common.Settings.Snap;
+            barBar.ZeroBased = Common.Settings.ZeroBased;
+            btnLoop.Checked = Common.Settings.Loop;
+            sldTempo.Resolution = Common.Settings.TempoResolution;
+
+            SaveSettings();
+        }
+        #endregion
+
+        #region Info
+        /// <summary>
+        /// All about me.
+        /// </summary>
+        void About_Click(object? sender, EventArgs e)
+        {
+            Tools.MarkdownToHtml(File.ReadAllLines(@".\README.md").ToList(), "lightcyan", "helvetica", true);
+        }
+
+        /// <summary>
+        /// Something you should know.
+        /// </summary>
+        /// <param name="cat"></param>
+        /// <param name="msg"></param>
+        void LogMessage(string cat, string msg)
+        {
+            int catSize = 3;
+            cat = cat.Length >= catSize ? cat.Left(catSize) : cat.PadRight(catSize);
+
+            // May come from a different thread.
+            this.InvokeIfRequired(_ =>
+            {
+                // string s = $"{DateTime.Now:mm\\:ss\\.fff} {cat} {msg}";
+                string s = $"> {cat} {msg}";
+                txtViewer.AppendLine(s);
+            });
         }
         #endregion
 
@@ -804,49 +804,52 @@ Button btnNone = new System.Windows.Forms.Button();
                     channels.Add(cc.ChannelNumber);
                 }
 
-                if (sender == btnExportAll)
-                {
-                    var s = _mdata.ExportAllEvents(channels);
-                    LogMessage("INF", $"Exported to {s}");
-                }
-                else if (sender == btnExportPattern)
-                {
-                    if(_mdata.AllPatterns.Count == 1)
-                    {
-                        var s = _mdata.ExportGroupedEvents("", channels, true);
-                        LogMessage("INF", $"Exported default to {s}");
-                    }
-                    else
-                    {
-                        foreach (var patternName in patternNames)
-                        {
-                            var s = _mdata.ExportGroupedEvents(patternName, channels, true);
-                            LogMessage("INF", $"Exported pattern {patternName} to {s}");
-                        }
-                    }
-                }
-                else if (sender == btnExportMidi)
-                {
-                    if (_mdata.AllPatterns.Count == 1)
-                    {
-                        // Use original ppq.
-                        var s = _mdata.ExportMidi("", channels, _mdata.DeltaTicksPerQuarterNote, false);
-                        LogMessage("INF", $"Export midi to {s}");
-                    }
-                    else
-                    {
-                        foreach (var patternName in patternNames)
-                        {
-                            // Use original ppq.
-                            var s = _mdata.ExportMidi(patternName, channels, _mdata.DeltaTicksPerQuarterNote, false);
-                            LogMessage("INF", $"Export midi to {s}");
-                        }
-                    }
-                }
-                else
-                {
-                    LogMessage("ERR", $"Ooops: {sender}");
-                }
+
+                //if (sender == btnExportAll)
+                //{
+                //    var s = _mdata.ExportAllEvents(channels);
+                //    LogMessage("INF", $"Exported to {s}");
+                //}
+                //else if (sender == btnExportPattern)
+                //{
+                //    if(_mdata.AllPatterns.Count == 1)
+                //    {
+                //        var s = _mdata.ExportGroupedEvents("", channels, true);
+                //        LogMessage("INF", $"Exported default to {s}");
+                //    }
+                //    else
+                //    {
+                //        foreach (var patternName in patternNames)
+                //        {
+                //            var s = _mdata.ExportGroupedEvents(patternName, channels, true);
+                //            LogMessage("INF", $"Exported pattern {patternName} to {s}");
+                //        }
+                //    }
+                //}
+                //else if (sender == btnExportMidi)
+                //{
+                //    if (_mdata.AllPatterns.Count == 1)
+                //    {
+                //        // Use original ppq.
+                //        var s = _mdata.ExportMidi("", channels, _mdata.DeltaTicksPerQuarterNote, false);
+                //        LogMessage("INF", $"Export midi to {s}");
+                //    }
+                //    else
+                //    {
+                //        foreach (var patternName in patternNames)
+                //        {
+                //            // Use original ppq.
+                //            var s = _mdata.ExportMidi(patternName, channels, _mdata.DeltaTicksPerQuarterNote, false);
+                //            LogMessage("INF", $"Export midi to {s}");
+                //        }
+                //    }
+                //}
+                //else
+                //{
+                //    LogMessage("ERR", $"Ooops: {sender}");
+                //}
+
+
             }
             catch (Exception ex)
             {
@@ -889,7 +892,6 @@ Button btnNone = new System.Windows.Forms.Button();
             }
         }
 
-
         /// <summary>
         /// User changed tempo.
         /// </summary>
@@ -922,6 +924,13 @@ Button btnNone = new System.Windows.Forms.Button();
         {
             _player.KillAll();
         }
+
+
+
+
+
+
+
 
         /////////////////////////// old below ////////////////
 

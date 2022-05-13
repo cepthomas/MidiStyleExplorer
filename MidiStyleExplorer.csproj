@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <Compile Remove="MainForm-MidiLib.cs" />
+    <Compile Remove="MainForm-original.cs" />
   </ItemGroup>
 
   <ItemGroup>
