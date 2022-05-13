@@ -12,7 +12,7 @@ namespace MidiStyleExplorer
     /// All the events associated with a channel. They have been adjusted from the original file
     /// to work with this application.
     /// </summary>
-    public class ChannelEvents
+    public class ChannelEvents //TODOX remove 
     {
         /// <summary>Contains data?</summary>
         public bool Valid { get { return MidiEvents.Count > 0; } }

@@ -21,11 +21,22 @@
 
   <ItemGroup>
     <Compile Remove="doc\**" />
+    <Compile Remove="lib\**" />
     <Compile Remove="test\**" />
     <EmbeddedResource Remove="doc\**" />
+    <EmbeddedResource Remove="lib\**" />
     <EmbeddedResource Remove="test\**" />
     <None Remove="doc\**" />
+    <None Remove="lib\**" />
     <None Remove="test\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="MainForm-MidiLib.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove=".gitignore" />
   </ItemGroup>
 
   <ItemGroup>
@@ -49,7 +60,12 @@
 
   <ItemGroup>
     <PackageReference Include="NAudio" Version="2.0.1" />
+    <PackageReference Include="NAudio.Midi" Version="2.0.1" />
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MidiLib\Source\Source.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -34,7 +34,7 @@
             this.barBar = new NBagOfUis.BarBar();
             this.sldTempo = new NBagOfUis.Slider();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.lbPatterns = new System.Windows.Forms.ListBox();
+            this.lbPatterns = new System.Windows.Forms.CheckedListBox();
             this.ftree = new NBagOfUis.FilTree();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -292,7 +292,7 @@
         private System.Windows.Forms.ToolTip toolTip;
         private NBagOfUis.BarBar barBar;
         private NBagOfUis.Slider sldTempo;
-        private System.Windows.Forms.ListBox lbPatterns;
+        private System.Windows.Forms.CheckedListBox lbPatterns;
         private System.Windows.Forms.ToolStripButton btnAutoplay;
         private System.Windows.Forms.ToolStripButton btnLoop;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;

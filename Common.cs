@@ -11,7 +11,7 @@ namespace MidiStyleExplorer
     public enum PlayState { Normal = 0, Solo = 1, Mute = 2 }
     #endregion
 
-    public class Common
+    public class Common //TODOX clean this file.
     {
         #region Constants
         /// <summary>Only 4/4 time supported.</summary>
