@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31911.196
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MidiStyleExplorer", "MidiStyleExplorer.csproj", "{31C1F9AA-647F-4E0C-AAC6-A46352DD0BE7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Source", "..\MidiLib\Source\Source.csproj", "{A931DB90-1A98-48E2-A395-65CE5EF97455}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MidiLib", "..\MidiLib\MidiLib.csproj", "{A931DB90-1A98-48E2-A395-65CE5EF97455}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

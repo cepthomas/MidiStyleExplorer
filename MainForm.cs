@@ -16,6 +16,7 @@ using MidiLib;
 using static MidiLib.ChannelCollection;
 
 
+
 namespace MidiStyleExplorer
 {
     public partial class MainForm : Form
@@ -836,6 +837,10 @@ namespace MidiStyleExplorer
         /// </summary>
         void About_Click(object? sender, EventArgs e)
         {
+            //TODO make a midi defs help:         public static string MarkdownToHtml(List<string> body, string bgcolor, string font, bool show)
+            //or link help to github url
+
+
             Tools.MarkdownToHtml(File.ReadAllLines(@".\README.md").ToList(), "lightcyan", "helvetica", true);
         }
 
