@@ -41,8 +41,8 @@
             this.sldTempo = new NBagOfUis.Slider();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.lbPatterns = new System.Windows.Forms.CheckedListBox();
-            this.btnAll = new System.Windows.Forms.Button();
-            this.btnNone = new System.Windows.Forms.Button();
+            this.btnAllPatterns = new System.Windows.Forms.Button();
+            this.btnClearPatterns = new System.Windows.Forms.Button();
             this.ftree = new NBagOfUis.FilTree();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -295,27 +295,27 @@
             this.toolTip.SetToolTip(this.lbPatterns, "Select patterns in style file");
             this.lbPatterns.SelectedIndexChanged += new System.EventHandler(this.Patterns_SelectedIndexChanged);
             // 
-            // btnAll
+            // btnAllPatterns
             // 
-            this.btnAll.Location = new System.Drawing.Point(558, 201);
-            this.btnAll.Name = "btnAll";
-            this.btnAll.Size = new System.Drawing.Size(43, 29);
-            this.btnAll.TabIndex = 90;
-            this.btnAll.Text = "++";
-            this.toolTip.SetToolTip(this.btnAll, "All patterns");
-            this.btnAll.UseVisualStyleBackColor = true;
-            this.btnAll.Click += new System.EventHandler(this.AllOrNone_Click);
+            this.btnAllPatterns.Location = new System.Drawing.Point(558, 201);
+            this.btnAllPatterns.Name = "btnAllPatterns";
+            this.btnAllPatterns.Size = new System.Drawing.Size(43, 29);
+            this.btnAllPatterns.TabIndex = 90;
+            this.btnAllPatterns.Text = "+P";
+            this.toolTip.SetToolTip(this.btnAllPatterns, "All patterns");
+            this.btnAllPatterns.UseVisualStyleBackColor = true;
+            this.btnAllPatterns.Click += new System.EventHandler(this.AllOrNone_Click);
             // 
-            // btnNone
+            // btnClearPatterns
             // 
-            this.btnNone.Location = new System.Drawing.Point(614, 201);
-            this.btnNone.Name = "btnNone";
-            this.btnNone.Size = new System.Drawing.Size(43, 29);
-            this.btnNone.TabIndex = 91;
-            this.btnNone.Text = "--";
-            this.toolTip.SetToolTip(this.btnNone, "Clear patterns");
-            this.btnNone.UseVisualStyleBackColor = true;
-            this.btnNone.Click += new System.EventHandler(this.AllOrNone_Click);
+            this.btnClearPatterns.Location = new System.Drawing.Point(614, 201);
+            this.btnClearPatterns.Name = "btnClearPatterns";
+            this.btnClearPatterns.Size = new System.Drawing.Size(43, 29);
+            this.btnClearPatterns.TabIndex = 91;
+            this.btnClearPatterns.Text = "-P";
+            this.toolTip.SetToolTip(this.btnClearPatterns, "Clear patterns");
+            this.btnClearPatterns.UseVisualStyleBackColor = true;
+            this.btnClearPatterns.Click += new System.EventHandler(this.AllOrNone_Click);
             // 
             // ftree
             // 
@@ -332,8 +332,8 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1110, 709);
-            this.Controls.Add(this.btnNone);
-            this.Controls.Add(this.btnAll);
+            this.Controls.Add(this.btnClearPatterns);
+            this.Controls.Add(this.btnAllPatterns);
             this.Controls.Add(this.ftree);
             this.Controls.Add(this.barBar);
             this.Controls.Add(this.sldTempo);
@@ -383,8 +383,8 @@
         private System.Windows.Forms.ToolStripLabel toolStripLabel2;
         private System.Windows.Forms.ToolStripComboBox cmbDrumChannel2;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
-        private System.Windows.Forms.Button btnAll;
-        private System.Windows.Forms.Button btnNone;
+        private System.Windows.Forms.Button btnAllPatterns;
+        private System.Windows.Forms.Button btnClearPatterns;
     }
 }
 

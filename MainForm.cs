@@ -16,7 +16,6 @@ using MidiLib;
 using static MidiLib.ChannelCollection;
 
 
-
 namespace MidiStyleExplorer
 {
     public partial class MainForm : Form
@@ -40,7 +39,7 @@ namespace MidiStyleExplorer
         readonly MmTimerEx _mmTimer = new();
 
         /// <summary>Midi events from the input file.</summary>
-        MidiData _mdata = new();
+        readonly MidiData _mdata = new();
 
         /// <summary>All the channel controls.</summary>
         readonly List<ChannelControl> _channelControls = new();
@@ -349,7 +348,7 @@ namespace MidiStyleExplorer
 
             if(chkPlay.Checked)
             {
-                chkPlay.Checked = false; // ==> Stop_X()
+                chkPlay.Checked = false; // ==> Stop()
             }
 
             try
@@ -359,7 +358,6 @@ namespace MidiStyleExplorer
                 cmbDrumChannel2.SelectedIndex = 0;
 
                 // Process the file. Set the default tempo from preferences.
-                _mdata = new();
                 _mdata.Read(fn, _settings.DefaultTempo, false);
 
                 // Init new stuff with contents of file/pattern.
@@ -513,6 +511,8 @@ namespace MidiStyleExplorer
                 Tempo = _settings.DefaultTempo
             };
 
+            sldTempo.Value = pinfo.Tempo;
+
             for (int i = 0; i < MidiDefs.NUM_CHANNELS; i++)
             {
                 int chnum = i + 1;
@@ -584,7 +584,7 @@ namespace MidiStyleExplorer
         /// <param name="e"></param>
         void AllOrNone_Click(object? sender, EventArgs e)
         {
-            bool check = sender == btnAll;
+            bool check = sender == btnAllPatterns;
             for(int i = 0; i < lbPatterns.Items.Count; i++)
             {
                 lbPatterns.SetItemChecked(i, check);                
@@ -837,11 +837,8 @@ namespace MidiStyleExplorer
         /// </summary>
         void About_Click(object? sender, EventArgs e)
         {
-            //TODO make a midi defs help:         public static string MarkdownToHtml(List<string> body, string bgcolor, string font, bool show)
-            //or link help to github url
-
-
-            Tools.MarkdownToHtml(File.ReadAllLines(@".\README.md").ToList(), "lightcyan", "helvetica", true);
+            new Process { StartInfo = new ProcessStartInfo("https://github.com/cepthomas/MidiStyleExplorer/blob/main/README.md") { UseShellExecute = true } }.Start();
+            new Process { StartInfo = new ProcessStartInfo("https://github.com/cepthomas/MidiLib/blob/main/README.md") { UseShellExecute = true } }.Start();
         }
 
         /// <summary>
