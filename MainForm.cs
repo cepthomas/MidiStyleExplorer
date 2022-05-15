@@ -837,8 +837,7 @@ namespace MidiStyleExplorer
         /// </summary>
         void About_Click(object? sender, EventArgs e)
         {
-            new Process { StartInfo = new ProcessStartInfo("https://github.com/cepthomas/MidiStyleExplorer/blob/main/README.md") { UseShellExecute = true } }.Start();
-            new Process { StartInfo = new ProcessStartInfo("https://github.com/cepthomas/MidiLib/blob/main/README.md") { UseShellExecute = true } }.Start();
+            MiscUtils.ShowReadme("MidiStyleExplorer");
         }
 
         /// <summary>
