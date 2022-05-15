@@ -57,10 +57,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MidiLib\MidiLib.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <Reference Include="MidiLib">
+      <HintPath>lib\MidiLib.dll</HintPath>
+    </Reference>
     <Reference Include="NBagOfTricks">
       <HintPath>lib\NBagOfTricks.dll</HintPath>
     </Reference>

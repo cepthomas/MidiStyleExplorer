@@ -3,7 +3,10 @@ A windows tool for opening, playing, and manipulating midi and Yamaha style file
 
 Requires VS2019 and .NET5.
 
-Uses [MidiLib](https://github.com/cepthomas/MidiLib/blob/main/README.md).
+Uses:
+- [NBagOfTricks](https://github.com/cepthomas/NBagOfTricks/blob/main/README.md)
+- [NBagOfUis](https://github.com/cepthomas/NBagOfUis/blob/main/README.md)
+- [MidiLib](https://github.com/cepthomas/MidiLib/blob/main/README.md).
 
 # Usage
 - Opens style files and plays the individual sections.
