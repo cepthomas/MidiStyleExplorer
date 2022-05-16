@@ -13,7 +13,6 @@ using NAudio.Midi;
 using NBagOfTricks;
 using NBagOfUis;
 using MidiLib;
-using static MidiLib.ChannelCollection;
 
 
 namespace MidiStyleExplorer
@@ -35,14 +34,17 @@ namespace MidiStyleExplorer
         /// <summary>Midi player.</summary>
         Player _player;
 
+        /// <summary>The internal channel objects.</summary>
+        ChannelCollection _allChannels = new();
+
+        /// <summary>All the channel controls.</summary>
+        readonly List<ChannelControl> _channelControls = new();
+
         /// <summary>The fast timer.</summary>
         readonly MmTimerEx _mmTimer = new();
 
         /// <summary>Midi events from the input file.</summary>
         readonly MidiData _mdata = new();
-
-        /// <summary>All the channel controls.</summary>
-        readonly List<ChannelControl> _channelControls = new();
 
         /// <summary>Current file.</summary>
         string _fn = "";
@@ -84,7 +86,7 @@ namespace MidiStyleExplorer
 
             try
             {
-                _player = new(_settings.MidiOutDevice, _exportPath);
+                _player = new(_settings.MidiOutDevice, _allChannels, _exportPath);
             }
             catch (Exception ex)
             {
@@ -524,13 +526,13 @@ namespace MidiStyleExplorer
                 // Is this channel pertinent?
                 if (chEvents.Any())
                 {
-                    TheChannels.SetEvents(chnum, chEvents, mt);
+                    _allChannels.SetEvents(chnum, chEvents, mt);
 
                     // Make new control.
                     ChannelControl control = new() { Location = new(x, y) };
 
                     // Bind to internal channel object.
-                    TheChannels.Bind(chnum, control);
+                    _allChannels.Bind(chnum, control);
 
                     // Now init the control - after binding!
                     control.Patch = pinfo.Patches[i];
