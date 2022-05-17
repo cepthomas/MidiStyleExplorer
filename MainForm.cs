@@ -355,9 +355,10 @@ namespace MidiStyleExplorer
 
             try
             {
-                // Reset drums.
+                // Reset stuff.
                 cmbDrumChannel1.SelectedIndex = MidiDefs.DEFAULT_DRUM_CHANNEL;
                 cmbDrumChannel2.SelectedIndex = 0;
+                _allChannels.Reset();
 
                 // Process the file. Set the default tempo from preferences.
                 _mdata.Read(fn, _settings.DefaultTempo, false);
@@ -411,13 +412,12 @@ namespace MidiStyleExplorer
                 }
 
                 _fn = fn;
-                Text = $"Midi Lib - {fn}";
-
+                Text = $"Midi Style Explorer {MiscUtils.GetVersionString()} - {fn}";
             }
             catch (Exception ex)
             {
                 LogMessage("ERR", $"Couldn't open the file: {fn} because: {ex.Message}");
-                Text = "Midi Lib";
+                Text = $"Midi Style Explorer {MiscUtils.GetVersionString()} - No file loaded";
                 ok = false;
             }
 
